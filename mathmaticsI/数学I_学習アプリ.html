@@ -150,13 +150,24 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 </div>
 <div class="progress-bar-container"><div class="seg-known" id="prog-known"></div><div class="seg-learning" id="prog-learning"></div></div>
 <h3 style="margin:16px 0 8px;font-size:1em">章別の進捗（公式）</h3><div id="ch-formula-stats"></div>
-<h3 style="margin:20px 0 8px;font-size:1em">問題演習の進捗</h3>
+<h3 style="margin:20px 0 8px;font-size:1em">問題演習の進捗（全88問）</h3>
 <div class="stats-grid">
 <div class="stat-card known"><div class="num" id="st-psolved">0</div><div class="label">正解済み</div></div>
 <div class="stat-card learning"><div class="num" id="st-preview">0</div><div class="label">要復習</div></div>
+<div class="stat-card unknown"><div class="num" id="st-pnew">0</div><div class="label">未着手</div></div>
 <div class="stat-card total"><div class="num" id="st-ptotal">0</div><div class="label">全問題</div></div>
 </div>
+<div class="progress-bar-container"><div class="seg-known" id="prog-psolved"></div><div class="seg-learning" id="prog-preview"></div></div>
 <h3 style="margin:20px 0 8px;font-size:1em">章別の進捗（問題）</h3><div id="ch-prob-stats"></div>
+<h3 style="margin:20px 0 8px;font-size:1em">解法パターンの進捗（全48パターン）</h3>
+<div class="stats-grid">
+<div class="stat-card known"><div class="num" id="st-patknown">0</div><div class="label">習得済み</div></div>
+<div class="stat-card learning"><div class="num" id="st-patlearning">0</div><div class="label">学習中</div></div>
+<div class="stat-card unknown"><div class="num" id="st-patnew">0</div><div class="label">未学習</div></div>
+<div class="stat-card total"><div class="num" id="st-pattotal">0</div><div class="label">全パターン</div></div>
+</div>
+<div class="progress-bar-container"><div class="seg-known" id="prog-patknown"></div><div class="seg-learning" id="prog-patlearning"></div></div>
+<h3 style="margin:20px 0 8px;font-size:1em">章別の進捗（解法パターン）</h3><div id="ch-pat-stats"></div>
 <h3 style="margin:20px 0 8px;font-size:1em">おすすめ学習</h3><div id="rec-area"></div>
 <h3 style="margin:20px 0 8px;font-size:1em">データ管理</h3>
 <div class="data-mgmt">
@@ -197,7 +208,8 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 </div>
 <!-- Patterns -->
 <div id="sec-patterns" class="section">
-<div class="filter-bar"><label>章:</label><select id="ptf-ch" onchange="filterPatterns()"><option value="all">全章</option><option value="ch1">第1章 数と式</option><option value="ch2">第2章 集合と命題</option><option value="ch3">第3章 2次関数</option><option value="ch4">第4章 図形と計量</option><option value="ch5">第5章 データの分析</option></select></div>
+<div class="filter-bar"><label>章:</label><select id="ptf-ch" onchange="filterPatterns()"><option value="all">全章</option><option value="ch1">第1章 数と式</option><option value="ch2">第2章 集合と命題</option><option value="ch3">第3章 2次関数</option><option value="ch4">第4章 図形と計量</option><option value="ch5">第5章 データの分析</option></select>
+<label>状態:</label><select id="ptf-st" onchange="filterPatterns()"><option value="all">すべて</option><option value="new">未学習</option><option value="learning">学習中</option><option value="known">習得済み</option></select></div>
 <div id="pat-container"></div>
 </div>
 <!-- Settings -->
@@ -847,7 +859,7 @@ let quizState=null;
 
 function loadState(){
   try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY));if(s&&s.formulaStatus)return s;}catch(e){}
-  return{formulaStatus:{},problemStatus:{},lastStudy:null,streak:0};
+  return{formulaStatus:{},problemStatus:{},patternStatus:{},lastStudy:null,streak:0};
 }
 function saveState(){
   const today=new Date().toISOString().slice(0,10);
@@ -868,6 +880,8 @@ function sfs(id,st){
 }
 function gps(id){return state.problemStatus[id]||'new';}
 function sps(id,st){state.problemStatus[id]=st;saveState();recordStudy();}
+function gpts(id){return (state.patternStatus||{})[id]||'new';}
+function spts(id,st){if(!state.patternStatus)state.patternStatus={};state.patternStatus[id]=st;saveState();recordStudy();}
 
 // ====== SRS (Spaced Repetition) ======
 const SRS_KEY='math1_srs';
@@ -973,7 +987,7 @@ function importData(input){
 }
 function resetAllData(){
   if(!confirm('本当にすべての学習データをリセットしますか？この操作は取り消せません。'))return;
-  state={formulaStatus:{},problemStatus:{}};
+  state={formulaStatus:{},problemStatus:{},patternStatus:{}};
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   srsData={};saveSRS();
   streakData={current:0,best:0,lastDate:null};saveStreak();
@@ -1034,9 +1048,13 @@ function updateDashboard(){
   // Problem stats
   let ps=0,pr=0;
   problems.forEach(p=>{const st=gps(p.id);if(st==='solved')ps++;else if(st==='review')pr++;});
+  const pNew=problems.length-ps-pr;
   document.getElementById('st-psolved').textContent=ps;
   document.getElementById('st-preview').textContent=pr;
+  document.getElementById('st-pnew').textContent=pNew;
   document.getElementById('st-ptotal').textContent=problems.length;
+  document.getElementById('prog-psolved').style.width=(ps/problems.length*100)+'%';
+  document.getElementById('prog-preview').style.width=(pr/problems.length*100)+'%';
 
   // Chapter problem stats
   const cps=document.getElementById('ch-prob-stats');cps.innerHTML='';
@@ -1046,6 +1064,27 @@ function updateDashboard(){
     cp.forEach(p=>{const st=gps(p.id);if(st==='solved')ck++;else if(st==='review')cl++;});
     const pct=ct>0?Math.round(ck/ct*100):0;
     cps.innerHTML+='<div class="chapter-row"><span class="name">'+CH_NAMES[ch]+'</span><div class="bar-bg"><div style="width:'+(ck/ct*100)+'%;background:var(--known)"></div><div style="width:'+(cl/ct*100)+'%;background:var(--learning)"></div></div><span class="pct">'+pct+'% ('+ck+'/'+ct+')</span></div>';
+  });
+
+  // Pattern stats
+  let patK=0,patL=0;
+  patterns.forEach(p=>{const st=gpts(p.id);if(st==='known')patK++;else if(st==='learning')patL++;});
+  const patN=patterns.length-patK-patL;
+  document.getElementById('st-patknown').textContent=patK;
+  document.getElementById('st-patlearning').textContent=patL;
+  document.getElementById('st-patnew').textContent=patN;
+  document.getElementById('st-pattotal').textContent=patterns.length;
+  document.getElementById('prog-patknown').style.width=(patK/patterns.length*100)+'%';
+  document.getElementById('prog-patlearning').style.width=(patL/patterns.length*100)+'%';
+
+  // Chapter pattern stats
+  const cpats=document.getElementById('ch-pat-stats');cpats.innerHTML='';
+  CHAPTERS.forEach(ch=>{
+    const cp=patterns.filter(p=>p.ch===ch);if(cp.length===0)return;
+    const ct=cp.length;let ck=0,cl=0;
+    cp.forEach(p=>{const st=gpts(p.id);if(st==='known')ck++;else if(st==='learning')cl++;});
+    const pct=ct>0?Math.round(ck/ct*100):0;
+    cpats.innerHTML+='<div class="chapter-row"><span class="name">'+CH_NAMES[ch]+'</span><div class="bar-bg"><div style="width:'+(ck/ct*100)+'%;background:var(--known)"></div><div style="width:'+(cl/ct*100)+'%;background:var(--learning)"></div></div><span class="pct">'+pct+'% ('+ck+'/'+ct+')</span></div>';
   });
 
   // Recommendations
@@ -1190,25 +1229,37 @@ function quizNext(){quizState.current++;renderQuizQ();}
 // ====== PATTERNS ======
 function filterPatterns(){
   const ch=document.getElementById('ptf-ch').value;
-  const filtered=patterns.filter(p=>ch==='all'||p.ch===ch);
+  const st=document.getElementById('ptf-st').value;
+  const filtered=patterns.filter(p=>{
+    if(ch!=='all'&&p.ch!==ch)return false;
+    if(st!=='all'&&gpts(p.id)!==st)return false;
+    return true;
+  });
   const c=document.getElementById('pat-container');c.innerHTML='';
   if(!filtered.length){c.innerHTML='<p style="text-align:center;color:var(--text-light);padding:40px">該当するパターンがありません</p>';return;}
   let lastCh='';
   filtered.forEach(p=>{
     if(p.ch!==lastCh){lastCh=p.ch;c.innerHTML+='<h3 style="margin:20px 0 8px;color:var(--primary)">'+CH_NAMES[p.ch]+'</h3>';}
-    c.innerHTML+='<div class="pattern-card"><div class="pat-header"><span class="pat-id">'+p.id+'</span><span class="pat-name">'+p.name+'</span></div>'
+    const pst=gpts(p.id);
+    const stBadge=pst==='known'?'<span style="color:var(--known);font-size:.8em;font-weight:600">✓ 習得済み</span>':pst==='learning'?'<span style="color:var(--learning);font-size:.8em;font-weight:600">★ 学習中</span>':'';
+    c.innerHTML+='<div class="pattern-card"><div class="pat-header"><span class="pat-id">'+p.id+'</span><span class="pat-name">'+p.name+'</span><span style="margin-left:auto">'+stBadge+'</span></div>'
       +(p.when?'<div class="pat-when"><b>使う場面:</b> '+p.when+'</div>':'')
       +'<div class="pat-content">'+p.content.replace(/\n/g,'<br>')+'</div>'
       +(p.note?'<div class="pat-note">'+p.note+'</div>':'')
-      +'</div>';
+      +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+      +'<button class="btn-mark btn-known" onclick="markPat(\''+p.id+'\',\'known\')">習得済み</button>'
+      +'<button class="btn-mark btn-learning" onclick="markPat(\''+p.id+'\',\'learning\')">学習中</button>'
+      +'<button class="btn-mark btn-unknown" onclick="markPat(\''+p.id+'\',\'new\')">未学習</button>'
+      +'</div></div>';
   });
   setTimeout(()=>renderMath(c),10);
 }
+function markPat(pid,status){spts(pid,status);filterPatterns();}
 
 // ====== SETTINGS ======
 function resetAll(){
   if(!confirm('本当にすべての学習データをリセットしますか？'))return;
-  state={formulaStatus:{},problemStatus:{},lastStudy:null,streak:0};
+  state={formulaStatus:{},problemStatus:{},patternStatus:{},lastStudy:null,streak:0};
   localStorage.removeItem(STORAGE_KEY);
   saveState();updateDashboard();alert('リセットしました。');
 }
