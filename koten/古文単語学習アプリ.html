@@ -827,7 +827,7 @@ tr:hover td { background: #f5efe5; }
       <div class="seg-known" id="d-bar-known"></div>
       <div class="seg-learning" id="d-bar-learning"></div>
     </div>
-    <h3 style="margin:16px 0 8px;color:var(--primary);font-size:1em;">章ごとの進捗</h3>
+    <h3 style="margin:16px 0 8px;color:var(--primary);font-size:1em;">単元別の進捗（品詞別）</h3>
     <div class="chapter-list" id="chapter-list"></div>
     <div class="data-management">
       <button onclick="exportData()">&#128229; エクスポート</button>
@@ -840,11 +840,16 @@ tr:hover td { background: #f5efe5; }
   <!-- ===== FLASHCARD ===== -->
   <div id="flashcard" class="section">
     <div class="filter-bar">
-      <select id="fc-chapter" onchange="initFlashcards()">
-        <option value="all">全章</option>
-        <option value="第1章">第1章</option>
-        <option value="第2章">第2章</option>
-        <option value="第3章">第3章</option>
+      <select id="fc-unit" onchange="initFlashcards()">
+        <option value="all">全て</option>
+        <option value="doushi">動詞</option>
+        <option value="keiyoushi_ku">形容詞（ク活用）</option>
+        <option value="keiyoushi_shiku">形容詞（シク活用）</option>
+        <option value="keiyoudoushi">形容動詞</option>
+        <option value="meishi">名詞</option>
+        <option value="fukushi">副詞</option>
+        <option value="kandoushi">感動詞・連語</option>
+        <option value="other">その他</option>
       </select>
       <select id="fc-star" onchange="initFlashcards()">
         <option value="all">全重要度</option>
@@ -862,7 +867,7 @@ tr:hover td { background: #f5efe5; }
     <div class="progress-bar"><div class="fill" id="fc-progress"></div></div>
     <div class="flashcard" id="fc-main" onclick="toggleFC()">
       <div class="badge">
-        <span id="fc-chapter-badge"></span>
+        <span id="fc-unit-badge"></span>
         <span class="star" id="fc-star-badge"></span>
       </div>
       <div class="word" id="fc-word"></div>
@@ -887,11 +892,16 @@ tr:hover td { background: #f5efe5; }
   <div id="quiz" class="section">
     <div class="quiz-setup" id="quiz-setup">
       <h2>四択クイズ</h2>
-      <p style="margin-bottom:16px;color:#888;">出題範囲を選んでください</p>
-      <div class="quiz-options">
-        <label><input type="checkbox" value="第1章" checked> 第1章（55語）</label>
-        <label><input type="checkbox" value="第2章" checked> 第2章（39語）</label>
-        <label><input type="checkbox" value="第3章" checked> 第3章（53語）</label>
+      <p style="margin-bottom:16px;color:#888;">出題範囲（品詞）を選んでください</p>
+      <div class="quiz-options" id="quiz-unit-options">
+        <label><input type="checkbox" value="doushi" checked> 動詞</label>
+        <label><input type="checkbox" value="keiyoushi_ku" checked> 形容詞（ク活用）</label>
+        <label><input type="checkbox" value="keiyoushi_shiku" checked> 形容詞（シク活用）</label>
+        <label><input type="checkbox" value="keiyoudoushi" checked> 形容動詞</label>
+        <label><input type="checkbox" value="meishi" checked> 名詞</label>
+        <label><input type="checkbox" value="fukushi" checked> 副詞</label>
+        <label><input type="checkbox" value="kandoushi" checked> 感動詞・連語</label>
+        <label><input type="checkbox" value="other" checked> その他</label>
       </div>
       <div class="quiz-mode-select">
         <label>出題モード:
@@ -935,11 +945,16 @@ tr:hover td { background: #f5efe5; }
   <div id="reference" class="section">
     <div class="search-box">
       <input type="text" id="ref-search" placeholder="古語・意味で検索..." oninput="filterTable()">
-      <select id="ref-chapter" onchange="filterTable()">
-        <option value="all">全章</option>
-        <option value="第1章">第1章</option>
-        <option value="第2章">第2章</option>
-        <option value="第3章">第3章</option>
+      <select id="ref-unit" onchange="filterTable()">
+        <option value="all">全て</option>
+        <option value="doushi">動詞</option>
+        <option value="keiyoushi_ku">形容詞（ク活用）</option>
+        <option value="keiyoushi_shiku">形容詞（シク活用）</option>
+        <option value="keiyoudoushi">形容動詞</option>
+        <option value="meishi">名詞</option>
+        <option value="fukushi">副詞</option>
+        <option value="kandoushi">感動詞・連語</option>
+        <option value="other">その他</option>
       </select>
       <select id="ref-star" onchange="filterTable()">
         <option value="all">全重要度</option>
@@ -954,7 +969,7 @@ tr:hover td { background: #f5efe5; }
         <thead>
           <tr>
             <th onclick="sortTable(0)">No.</th>
-            <th onclick="sortTable(1)">章</th>
+            <th onclick="sortTable(1)">単元</th>
             <th onclick="sortTable(2)">古語</th>
             <th onclick="sortTable(3)">品詞</th>
             <th onclick="sortTable(4)">意味</th>
@@ -1124,6 +1139,50 @@ const WORDS = [
   {no:146,ch:"第3章",word:"いざ",pos:"感動詞",core:"さあ（人を誘う）",memo:"「いさ」と「いざ」を区別。「いざ」は誘い",star:"★★★"},
   {no:147,ch:"第3章",word:"あな",pos:"感動詞",core:"ああ（感嘆・驚き）",memo:"「あなかしこ」「あなめでたや」等",star:"★"},
 ];
+
+// ===== UNIT (品詞別) DEFINITIONS =====
+const UNIT_NAMES = {
+  doushi: "動詞",
+  keiyoushi_ku: "形容詞（ク活用）",
+  keiyoushi_shiku: "形容詞（シク活用）",
+  keiyoudoushi: "形容動詞",
+  meishi: "名詞",
+  fukushi: "副詞",
+  kandoushi: "感動詞・連語",
+  other: "その他"
+};
+
+const UNIT_ORDER = ["doushi","keiyoushi_ku","keiyoushi_shiku","keiyoudoushi","meishi","fukushi","kandoushi","other"];
+
+// Map to manually resolve ambiguous pos entries
+const UNIT_OVERRIDES = {
+  49: "keiyoushi_ku",      // ものはかなし — ク活用
+  50: "keiyoushi_ku",      // はかなし — ク活用
+  59: "other",             // いでそ — 名詞/動詞 mixed
+  68: "keiyoushi_shiku",   // いとほし — シク活用
+  109: "keiyoushi_shiku",  // いとほし／いとはし — シク活用
+  113: "kandoushi",        // あはれ／あはれなり — 感動詞/形容動詞 → 感動詞・連語
+  117: "keiyoushi_shiku",  // おどろおどろし — シク活用
+  132: "keiyoudoushi",     // ことわりなり — 名詞/形容動詞 → 形容動詞
+  140: "keiyoushi_ku"      // おきてなし — ク活用
+};
+
+function getUnit(w) {
+  if (UNIT_OVERRIDES[w.no]) return UNIT_OVERRIDES[w.no];
+  const p = w.pos;
+  if (p.includes("形容動詞")) return "keiyoudoushi";
+  if (p.includes("形容詞") && p.includes("ク活用")) return "keiyoushi_ku";
+  if (p.includes("形容詞") && p.includes("シク活用")) return "keiyoushi_shiku";
+  if (p.includes("形容詞")) return "keiyoushi_ku"; // fallback for unspecified 形容詞
+  if (p.includes("動詞")) return "doushi";
+  if (p.includes("副詞")) return "fukushi";
+  if (p.includes("感動詞")) return "kandoushi";
+  if (p.includes("名詞")) return "meishi";
+  return "other";
+}
+
+// Assign unit to each word
+WORDS.forEach(w => { w.unit = getUnit(w); });
 
 // ===== LOCAL STORAGE =====
 const STORAGE_KEY = "kobun_tango_status";
@@ -1392,30 +1451,29 @@ function updateDashboard() {
   document.getElementById("d-bar-known").style.width = `${(known/total)*100}%`;
   document.getElementById("d-bar-learning").style.width = `${(learning/total)*100}%`;
 
-  const chapters = ["第1章","第2章","第3章"];
   const listEl = document.getElementById("chapter-list");
   listEl.innerHTML = "";
-  chapters.forEach(ch => {
-    const chWords = WORDS.filter(w => w.ch === ch);
-    let chKnown = 0, chLearning = 0;
-    chWords.forEach(w => {
+  UNIT_ORDER.forEach(unitId => {
+    const unitWords = WORDS.filter(w => w.unit === unitId);
+    if (!unitWords.length) return;
+    let uKnown = 0, uLearning = 0;
+    unitWords.forEach(w => {
       const s = status[w.no] || "unknown";
-      if (s === "known") chKnown++;
-      else if (s === "learning") chLearning++;
+      if (s === "known") uKnown++;
+      else if (s === "learning") uLearning++;
     });
-    const pct = chWords.length ? Math.round(((chKnown + chLearning * 0.5) / chWords.length) * 100) : 0;
     const row = document.createElement("div");
     row.className = "chapter-row";
     row.innerHTML = `
-      <span class="ch-name">${ch}</span>
+      <span class="ch-name">${UNIT_NAMES[unitId]}</span>
       <div class="bar-bg">
-        <div style="width:${(chKnown/chWords.length)*100}%;background:var(--known);"></div>
-        <div style="width:${(chLearning/chWords.length)*100}%;background:var(--learning);"></div>
+        <div style="width:${(uKnown/unitWords.length)*100}%;background:var(--known);"></div>
+        <div style="width:${(uLearning/unitWords.length)*100}%;background:var(--learning);"></div>
       </div>
-      <span class="pct">${chKnown}/${chWords.length}</span>
+      <span class="pct">${uKnown}/${unitWords.length}</span>
     `;
     row.onclick = () => {
-      document.getElementById("fc-chapter").value = ch;
+      document.getElementById("fc-unit").value = unitId;
       document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
       document.querySelectorAll(".nav button")[1].classList.add("active");
       showSectionDirect("flashcard");
@@ -1438,13 +1496,13 @@ let fcCards = [];
 let fcIdx = 0;
 
 function getFilteredWords() {
-  const ch = document.getElementById("fc-chapter").value;
+  const unit = document.getElementById("fc-unit").value;
   const star = document.getElementById("fc-star").value;
   const st = document.getElementById("fc-status").value;
   const status = loadStatus();
 
   return WORDS.filter(w => {
-    if (ch !== "all" && w.ch !== ch) return false;
+    if (unit !== "all" && w.unit !== unit) return false;
     if (star === "★★★" && w.star !== "★★★") return false;
     if (star === "★★" && w.star === "★") return false;
     if (st !== "all") {
@@ -1476,14 +1534,14 @@ function renderFC() {
     document.getElementById("fc-pos").textContent = "";
     document.getElementById("fc-meaning").textContent = "";
     document.getElementById("fc-memo").textContent = "";
-    document.getElementById("fc-chapter-badge").textContent = "";
+    document.getElementById("fc-unit-badge").textContent = "";
     document.getElementById("fc-star-badge").textContent = "";
     document.getElementById("fc-counter").textContent = "0 / 0";
     document.getElementById("fc-progress").style.width = "0%";
     return;
   }
   const w = fcCards[fcIdx];
-  document.getElementById("fc-chapter-badge").textContent = w.ch;
+  document.getElementById("fc-unit-badge").textContent = UNIT_NAMES[w.unit] || w.unit;
   const starClass = w.star === "★★★" ? "s3" : w.star === "★★" ? "s2" : "s1";
   document.getElementById("fc-star-badge").className = `star ${starClass}`;
   document.getElementById("fc-star-badge").textContent = w.star;
@@ -1533,15 +1591,15 @@ let quizScore = 0;
 let quizMistakes = [];
 
 function startQuiz() {
-  const cbs = document.querySelectorAll("#quiz-setup .quiz-options input:checked");
-  const chapters = Array.from(cbs).map(c => c.value);
-  if (!chapters.length) { alert("出題範囲を1つ以上選んでください"); return; }
+  const cbs = document.querySelectorAll("#quiz-unit-options input:checked");
+  const units = Array.from(cbs).map(c => c.value);
+  if (!units.length) { alert("出題範囲を1つ以上選んでください"); return; }
 
   const mode = document.getElementById("quiz-mode").value;
   const starOnly = document.getElementById("quiz-star-only").checked;
   const count = parseInt(document.getElementById("quiz-count").value);
 
-  let pool = WORDS.filter(w => chapters.includes(w.ch));
+  let pool = WORDS.filter(w => units.includes(w.unit));
   if (starOnly) pool = pool.filter(w => w.star === "★★★");
   if (pool.length < 4) { alert("出題可能な単語が少なすぎます"); return; }
 
@@ -1572,7 +1630,7 @@ function renderQuiz() {
 
   document.getElementById("q-label").textContent = `第${quizIdx + 1}問 / ${quizQs.length}問`;
   document.getElementById("q-text").textContent = isWordToMeaning ? q.word : q.core;
-  document.getElementById("q-sub").textContent = isWordToMeaning ? `${q.ch}｜${q.pos}` : `${q.ch}｜この意味の古語は？`;
+  document.getElementById("q-sub").textContent = isWordToMeaning ? `${UNIT_NAMES[q.unit] || q.pos}｜${q.pos}` : `${UNIT_NAMES[q.unit] || q.pos}｜この意味の古語は？`;
   document.getElementById("quiz-progress").style.width = `${(quizIdx / quizQs.length) * 100}%`;
 
   // Build choices
@@ -1681,12 +1739,12 @@ let sortAsc = true;
 function renderTable() {
   const tbody = document.getElementById("ref-tbody");
   const search = (document.getElementById("ref-search").value || "").toLowerCase();
-  const ch = document.getElementById("ref-chapter").value;
+  const unit = document.getElementById("ref-unit").value;
   const star = document.getElementById("ref-star").value;
   const status = loadStatus();
 
   let filtered = WORDS.filter(w => {
-    if (ch !== "all" && w.ch !== ch) return false;
+    if (unit !== "all" && w.unit !== unit) return false;
     if (star !== "all" && w.star !== star) return false;
     if (search) {
       const s = (w.word + w.core + w.memo + w.pos).toLowerCase();
@@ -1700,7 +1758,7 @@ function renderTable() {
     let va, vb;
     switch(sortCol) {
       case 0: va = a.no; vb = b.no; break;
-      case 1: va = a.ch; vb = b.ch; break;
+      case 1: va = UNIT_ORDER.indexOf(a.unit); vb = UNIT_ORDER.indexOf(b.unit); break;
       case 2: va = a.word; vb = b.word; break;
       case 3: va = a.pos; vb = b.pos; break;
       case 4: va = a.core; vb = b.core; break;
@@ -1723,7 +1781,7 @@ function renderTable() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${w.no}</td>
-      <td>${w.ch}</td>
+      <td style="font-size:0.8em;">${UNIT_NAMES[w.unit] || w.unit}</td>
       <td><strong>${w.word}</strong></td>
       <td style="font-size:0.8em;">${w.pos}</td>
       <td>${w.core}</td>
@@ -1772,29 +1830,29 @@ function clearSession() {
 
 function saveFlashcardSession() {
   if (!fcCards.length) return;
-  const ch = document.getElementById("fc-chapter").value;
+  const unit = document.getElementById("fc-unit").value;
   const star = document.getElementById("fc-star").value;
   const st = document.getElementById("fc-status").value;
-  const chLabel = ch === "all" ? "全章" : ch;
-  const desc = `フラッシュカード ${chLabel} - ${fcIdx + 1}/${fcCards.length}枚目`;
+  const unitLabel = unit === "all" ? "全て" : (UNIT_NAMES[unit] || unit);
+  const desc = `フラッシュカード ${unitLabel} - ${fcIdx + 1}/${fcCards.length}枚目`;
   saveSession({
     section: "flashcard",
     cardIndex: fcIdx,
-    filters: { chapter: ch, star: star, status: st },
+    filters: { unit: unit, star: star, status: st },
     description: desc
   });
 }
 
 function saveQuizSession() {
   if (!quizQs.length) return;
-  const chapters = Array.from(document.querySelectorAll("#quiz-setup .quiz-options input:checked")).map(c => c.value);
+  const units = Array.from(document.querySelectorAll("#quiz-unit-options input:checked")).map(c => c.value);
   const mode = quizQs[0] ? quizQs[0].mode : "word-to-meaning";
-  const chLabel = chapters.length === 3 ? "全章" : chapters.join("・");
-  const desc = `クイズ ${chLabel} - ${quizIdx + 1}問目/${quizQs.length}問`;
+  const unitLabel = units.length === UNIT_ORDER.length ? "全て" : units.map(u => UNIT_NAMES[u] || u).join("・");
+  const desc = `クイズ ${unitLabel} - ${quizIdx + 1}問目/${quizQs.length}問`;
   saveSession({
     section: "quiz",
     quizIndex: quizIdx,
-    quizData: { chapters, mode, score: quizScore, mistakes: quizMistakes, questions: quizQs },
+    quizData: { units, mode, score: quizScore, mistakes: quizMistakes, questions: quizQs },
     description: desc
   });
 }
@@ -1834,7 +1892,7 @@ function resumeSession() {
     document.querySelectorAll(".nav button")[1].classList.add("active");
     // Restore filters
     if (session.filters) {
-      document.getElementById("fc-chapter").value = session.filters.chapter || "all";
+      document.getElementById("fc-unit").value = session.filters.unit || "all";
       document.getElementById("fc-star").value = session.filters.star || "all";
       document.getElementById("fc-status").value = session.filters.status || "all";
     }

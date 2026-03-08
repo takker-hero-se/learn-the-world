@@ -517,7 +517,7 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
 
-  .category-row .name { font-weight: 600; min-width: 100px; font-size: 0.9em; }
+  .category-row .name { font-weight: 600; min-width: 160px; font-size: 0.85em; }
 
   .category-row .bar-bg {
     flex: 1;
@@ -723,7 +723,7 @@
       <div class="seg-learning" id="seg-learning"></div>
     </div>
 
-    <h3 class="dashboard-section-title">カテゴリ別進捗</h3>
+    <h3 class="dashboard-section-title">単元別進捗</h3>
     <div class="category-stats" id="category-stats"></div>
 
     <h3 class="dashboard-section-title">データ管理</h3>
@@ -739,12 +739,29 @@
   <div id="flashcard" class="section active">
     <div class="flashcard-controls">
       <select id="fc-category" onchange="initFlashcards()">
-        <option value="doushi">動詞の活用</option>
-        <option value="keiyoushi">形容詞の活用</option>
-        <option value="keiyoudoushi">形容動詞の活用</option>
-        <option value="jodoushi">助動詞の活用</option>
-        <option value="jodoushi-setsuzoku">助動詞の接続</option>
-        <option value="jodoushi-imi">助動詞の意味</option>
+        <optgroup label="動詞">
+          <option value="doushi-regular">動詞（正格活用）</option>
+          <option value="doushi-irregular">動詞（変格活用）</option>
+        </optgroup>
+        <optgroup label="形容詞">
+          <option value="keiyoushi-ku">形容詞（ク活用）</option>
+          <option value="keiyoushi-shiku">形容詞（シク活用）</option>
+        </optgroup>
+        <optgroup label="形容動詞">
+          <option value="keiyoudoushi">形容動詞</option>
+        </optgroup>
+        <optgroup label="助動詞（活用）">
+          <option value="jodoushi-ukemi">助動詞（受身・使役）</option>
+          <option value="jodoushi-uchi">助動詞（打消）</option>
+          <option value="jodoushi-kako">助動詞（過去・完了）</option>
+          <option value="jodoushi-suiryou">助動詞（推量・意志）</option>
+          <option value="jodoushi-suitei">助動詞（推定・伝聞）</option>
+          <option value="jodoushi-ganbo">助動詞（願望・比況・断定）</option>
+        </optgroup>
+        <optgroup label="助動詞（その他）">
+          <option value="jodoushi-setsuzoku">助動詞の接続</option>
+          <option value="jodoushi-imi">助動詞の意味</option>
+        </optgroup>
       </select>
       <button onclick="shuffleCards()">シャッフル</button>
     </div>
@@ -769,10 +786,17 @@
       <h2>四択クイズ</h2>
       <p style="margin-bottom:16px;color:#666;">出題範囲を選んでください</p>
       <div class="quiz-options">
-        <label><input type="checkbox" value="doushi" checked> 動詞の活用</label>
-        <label><input type="checkbox" value="keiyoushi" checked> 形容詞の活用</label>
-        <label><input type="checkbox" value="keiyoudoushi" checked> 形容動詞の活用</label>
-        <label><input type="checkbox" value="jodoushi" checked> 助動詞の活用</label>
+        <label><input type="checkbox" value="doushi-regular" checked> 動詞（正格活用）</label>
+        <label><input type="checkbox" value="doushi-irregular" checked> 動詞（変格活用）</label>
+        <label><input type="checkbox" value="keiyoushi-ku" checked> 形容詞（ク活用）</label>
+        <label><input type="checkbox" value="keiyoushi-shiku" checked> 形容詞（シク活用）</label>
+        <label><input type="checkbox" value="keiyoudoushi" checked> 形容動詞</label>
+        <label><input type="checkbox" value="jodoushi-ukemi" checked> 助動詞（受身・使役）</label>
+        <label><input type="checkbox" value="jodoushi-uchi" checked> 助動詞（打消）</label>
+        <label><input type="checkbox" value="jodoushi-kako" checked> 助動詞（過去・完了）</label>
+        <label><input type="checkbox" value="jodoushi-suiryou" checked> 助動詞（推量・意志）</label>
+        <label><input type="checkbox" value="jodoushi-suitei" checked> 助動詞（推定・伝聞）</label>
+        <label><input type="checkbox" value="jodoushi-ganbo" checked> 助動詞（願望・比況・断定）</label>
         <label><input type="checkbox" value="jodoushi-setsuzoku"> 助動詞の接続</label>
         <label><input type="checkbox" value="jodoushi-imi"> 助動詞の意味</label>
       </div>
@@ -1018,20 +1042,24 @@
 <script>
 // ===== DATA =====
 const DATA = {
-  doushi: [
+  'doushi-regular': [
     {type:"四段活用", row:["a","i","u","u","e","e"], example:"書く", mizen:"か", renyou:"き", shushi:"く", rentai:"く", izen:"け", meirei:"け"},
     {type:"上一段活用", row:["i","i","iる","iる","iれ","iよ"], example:"見る", mizen:"み", renyou:"み", shushi:"みる", rentai:"みる", izen:"みれ", meirei:"みよ"},
     {type:"上二段活用", row:["i","i","u","uる","uれ","iよ"], example:"起く", mizen:"き", renyou:"き", shushi:"く", rentai:"くる", izen:"くれ", meirei:"きよ"},
     {type:"下一段活用", row:["e","e","eる","eる","eれ","eよ"], example:"蹴る", mizen:"け", renyou:"け", shushi:"ける", rentai:"ける", izen:"けれ", meirei:"けよ"},
     {type:"下二段活用", row:["e","e","u","uる","uれ","eよ"], example:"受く", mizen:"け", renyou:"け", shushi:"く", rentai:"くる", izen:"くれ", meirei:"けよ"},
+  ],
+  'doushi-irregular': [
     {type:"カ行変格活用", row:["こ","き","く","くる","くれ","こよ"], example:"来(く)"},
     {type:"サ行変格活用", row:["せ","し","す","する","すれ","せよ"], example:"す"},
     {type:"ナ行変格活用", row:["な","に","ぬ","ぬる","ぬれ","ね"], example:"死ぬ"},
     {type:"ラ行変格活用", row:["ら","り","り","る","れ","れ"], example:"あり"},
   ],
-  keiyoushi: [
+  'keiyoushi-ku': [
     {type:"ク活用（本活用）", row:["(く)","く","し","き","けれ","○"]},
     {type:"ク活用（補助活用）", row:["から","かり","○","かる","○","かれ"]},
+  ],
+  'keiyoushi-shiku': [
     {type:"シク活用（本活用）", row:["(しく)","しく","し","しき","しけれ","○"]},
     {type:"シク活用（補助活用）", row:["しから","しかり","○","しかる","○","しかれ"]},
   ],
@@ -1039,36 +1067,46 @@ const DATA = {
     {type:"ナリ活用", row:["なら","なり・に","なり","なる","なれ","なれ"]},
     {type:"タリ活用", row:["たら","たり・と","たり","たる","たれ","たれ"]},
   ],
-  jodoushi: [
+  'jodoushi-ukemi': [
     {name:"る", row:["れ","れ","る","るる","るれ","れよ"], katsuyo:"下二段型"},
     {name:"らる", row:["られ","られ","らる","らるる","らるれ","られよ"], katsuyo:"下二段型"},
     {name:"す", row:["せ","せ","す","する","すれ","せよ"], katsuyo:"下二段型"},
     {name:"さす", row:["させ","させ","さす","さする","さすれ","させよ"], katsuyo:"下二段型"},
     {name:"しむ", row:["しめ","しめ","しむ","しむる","しむれ","しめよ"], katsuyo:"下二段型"},
+  ],
+  'jodoushi-uchi': [
     {name:"ず", row:["ず","ず","ず","ぬ・ざる","ね・ざれ","○"], katsuyo:"特殊型"},
+    {name:"じ", row:["○","○","じ","じ","○","○"], katsuyo:"特殊型"},
+    {name:"まじ", row:["まじく","まじく・まじかり","まじ","まじき・まじかる","まじけれ","○"], katsuyo:"ク活用型"},
+  ],
+  'jodoushi-kako': [
     {name:"き", row:["○(せ)","○","き","し","しか","○"], katsuyo:"特殊型"},
     {name:"けり", row:["けら","○","けり","ける","けれ","○"], katsuyo:"ラ変型"},
     {name:"つ", row:["て","て","つ","つる","つれ","てよ"], katsuyo:"下二段型"},
     {name:"ぬ", row:["な","に","ぬ","ぬる","ぬれ","ね"], katsuyo:"ナ変型"},
     {name:"たり(完了)", row:["たら","たり","たり","たる","たれ","たれ"], katsuyo:"ラ変型"},
     {name:"り", row:["ら","り","り","る","れ","れ"], katsuyo:"ラ変型"},
+  ],
+  'jodoushi-suiryou': [
     {name:"む", row:["○","○","む","む","め","○"], katsuyo:"四段型"},
     {name:"むず", row:["○","○","むず","むずる","むずれ","○"], katsuyo:"サ変型"},
+    {name:"べし", row:["(べく)","べく・べかり","べし","べき・べかる","べけれ","○"], katsuyo:"ク活用型"},
     {name:"けむ", row:["○","○","けむ","けむ","けめ","○"], katsuyo:"四段型"},
     {name:"らむ", row:["○","○","らむ","らむ","らめ","○"], katsuyo:"四段型"},
-    {name:"べし", row:["(べく)","べく・べかり","べし","べき・べかる","べけれ","○"], katsuyo:"ク活用型"},
-    {name:"まじ", row:["まじく","まじく・まじかり","まじ","まじき・まじかる","まじけれ","○"], katsuyo:"ク活用型"},
-    {name:"じ", row:["○","○","じ","じ","○","○"], katsuyo:"特殊型"},
+    {name:"まし", row:["ませ・ましか","○","まし","まし","ましか","○"], katsuyo:"特殊型"},
+  ],
+  'jodoushi-suitei': [
     {name:"らし", row:["○","○","らし","らし","らし","○"], katsuyo:"無変化型"},
     {name:"めり", row:["○","めり","めり","める","めれ","○"], katsuyo:"ラ変型"},
     {name:"なり(伝聞推定)", row:["○","なり","なり","なる","なれ","○"], katsuyo:"ラ変型"},
-    {name:"まし", row:["ませ・ましか","○","まし","まし","ましか","○"], katsuyo:"特殊型"},
+  ],
+  'jodoushi-ganbo': [
     {name:"まほし", row:["まほしく","まほしく・まほしかり","まほし","まほしき・まほしかる","まほしけれ","○"], katsuyo:"ク活用型"},
     {name:"たし", row:["たく","たく・たかり","たし","たき・たかる","たけれ","○"], katsuyo:"ク活用型"},
     {name:"なり(断定)", row:["なら","なり・に","なり","なる","なれ","なれ"], katsuyo:"ナリ活用型"},
     {name:"たり(断定)", row:["たら","たり・と","たり","たる","たれ","たれ"], katsuyo:"タリ活用型"},
     {name:"ごとし", row:["ごとく","ごとく","ごとし","ごとき","○","○"], katsuyo:"ク活用型"},
-  ]
+  ],
 };
 
 const SETSUZOKU = {
@@ -1106,10 +1144,28 @@ function getItemKey(category, index) {
   return category + '_' + index;
 }
 
+// ===== CATEGORY LABELS =====
+const CATEGORY_LABELS = {
+  'doushi-regular': '動詞（正格活用）',
+  'doushi-irregular': '動詞（変格活用）',
+  'keiyoushi-ku': '形容詞（ク活用）',
+  'keiyoushi-shiku': '形容詞（シク活用）',
+  'keiyoudoushi': '形容動詞',
+  'jodoushi-ukemi': '助動詞（受身・使役）',
+  'jodoushi-uchi': '助動詞（打消）',
+  'jodoushi-kako': '助動詞（過去・完了）',
+  'jodoushi-suiryou': '助動詞（推量・意志）',
+  'jodoushi-suitei': '助動詞（推定・伝聞）',
+  'jodoushi-ganbo': '助動詞（願望・比況・断定）',
+  'jodoushi-setsuzoku': '助動詞の接続',
+  'jodoushi-imi': '助動詞の意味'
+};
+
+const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS);
+
 function getAllItemKeys() {
   const keys = [];
-  const categories = ['doushi','keiyoushi','keiyoudoushi','jodoushi','jodoushi-setsuzoku','jodoushi-imi'];
-  categories.forEach(cat => {
+  ALL_CATEGORIES.forEach(cat => {
     const cards = buildFlashcards(cat);
     cards.forEach((c, i) => {
       keys.push({ key: getItemKey(cat, i), category: cat, card: c });
@@ -1117,16 +1173,6 @@ function getAllItemKeys() {
   });
   return keys;
 }
-
-// ===== CATEGORY LABELS =====
-const CATEGORY_LABELS = {
-  'doushi': '動詞',
-  'keiyoushi': '形容詞',
-  'keiyoudoushi': '形容動詞',
-  'jodoushi': '助動詞',
-  'jodoushi-setsuzoku': '助動詞(接続)',
-  'jodoushi-imi': '助動詞(意味)'
-};
 
 // ===== PERSISTENT MASTERY STATUS =====
 function loadStatus() {
@@ -1308,29 +1354,7 @@ function renderDashboard() {
 
   const catContainer = document.getElementById('category-stats');
   catContainer.innerHTML = '';
-  // Show main 4 categories grouped
-  const displayCats = ['doushi','keiyoushi','keiyoudoushi','jodoushi'];
-  displayCats.forEach(cat => {
-    const stats = catStats[cat];
-    if (!stats) return;
-    const kPct = stats.total > 0 ? (stats.known / stats.total * 100) : 0;
-    const lPct = stats.total > 0 ? (stats.learning / stats.total * 100) : 0;
-
-    const row = document.createElement('div');
-    row.className = 'category-row';
-    row.innerHTML = `
-      <span class="name">${CATEGORY_LABELS[cat]}</span>
-      <div class="bar-bg">
-        <div style="width:${kPct}%;background:var(--correct);"></div>
-        <div style="width:${lPct}%;background:var(--gold);"></div>
-      </div>
-      <span class="pct">${Math.round(kPct + lPct)}%</span>
-    `;
-    catContainer.appendChild(row);
-  });
-
-  // Show supplementary categories
-  ['jodoushi-setsuzoku','jodoushi-imi'].forEach(cat => {
+  ALL_CATEGORIES.forEach(cat => {
     const stats = catStats[cat];
     if (!stats) return;
     const kPct = stats.total > 0 ? (stats.known / stats.total * 100) : 0;
@@ -1456,20 +1480,32 @@ function resetAllData() {
 let fcCards = [];
 let fcIndex = 0;
 
+function isDoushiCategory(category) {
+  return category === 'doushi-regular' || category === 'doushi-irregular';
+}
+
+function isKeiyoushiCategory(category) {
+  return category === 'keiyoushi-ku' || category === 'keiyoushi-shiku';
+}
+
+function isJodoushiKatsuyouCategory(category) {
+  return ['jodoushi-ukemi','jodoushi-uchi','jodoushi-kako','jodoushi-suiryou','jodoushi-suitei','jodoushi-ganbo'].includes(category);
+}
+
 function buildFlashcards(category) {
   const cards = [];
-  if (category === "doushi") {
+  if (isDoushiCategory(category)) {
     const formProps = ["mizen","renyou","shushi","rentai","izen","meirei"];
-    DATA.doushi.forEach(v => {
+    DATA[category].forEach(v => {
       FORMS.forEach((f, i) => {
         const answer = (v[formProps[i]] !== undefined) ? v[formProps[i]] : v.row[i];
-        cards.push({label: `動詞 - ${v.type}`, question: `「${v.example}」の${f}は？`, answer: answer, hint: v.type});
+        cards.push({label: `${CATEGORY_LABELS[category]} - ${v.type}`, question: `「${v.example}」の${f}は？`, answer: answer, hint: v.type});
       });
     });
-  } else if (category === "keiyoushi") {
-    DATA.keiyoushi.forEach(v => {
+  } else if (isKeiyoushiCategory(category)) {
+    DATA[category].forEach(v => {
       FORMS.forEach((f, i) => {
-        cards.push({label: `形容詞 - ${v.type}`, question: `${v.type}の${f}は？`, answer: v.row[i], hint: ""});
+        cards.push({label: `${CATEGORY_LABELS[category]} - ${v.type}`, question: `${v.type}の${f}は？`, answer: v.row[i], hint: ""});
       });
     });
   } else if (category === "keiyoudoushi") {
@@ -1478,10 +1514,10 @@ function buildFlashcards(category) {
         cards.push({label: `形容動詞 - ${v.type}`, question: `${v.type}の${f}は？`, answer: v.row[i], hint: ""});
       });
     });
-  } else if (category === "jodoushi") {
-    DATA.jodoushi.forEach(v => {
+  } else if (isJodoushiKatsuyouCategory(category)) {
+    DATA[category].forEach(v => {
       FORMS.forEach((f, i) => {
-        cards.push({label: `助動詞「${v.name}」`, question: `「${v.name}」の${f}は？`, answer: v.row[i], hint: `${v.katsuyo}`});
+        cards.push({label: `${CATEGORY_LABELS[category]}「${v.name}」`, question: `「${v.name}」の${f}は？`, answer: v.row[i], hint: `${v.katsuyo}`});
       });
     });
   } else if (category === "jodoushi-setsuzoku") {
