@@ -106,6 +106,15 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 .danger-zone h3{color:var(--accent);margin-bottom:8px}
 .btn-reset{padding:10px 20px;background:#e74c3c;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600}
 .shortcut-info{background:#fff;border-radius:12px;padding:16px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08);font-size:.88em;line-height:2}
+.streak-display{background:linear-gradient(135deg,#fff8e1,#fff3cd);border-radius:12px;padding:14px 18px;margin:12px 0;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.streak-fire{font-size:1.8em}.streak-num{font-size:1.6em;font-weight:800;color:var(--accent)}.streak-label{font-size:.9em;color:var(--text)}.streak-best{font-size:.8em;color:var(--text-light);margin-left:auto}
+.review-banner{background:linear-gradient(135deg,#e8f0fe,#d2e3fc);border-radius:12px;padding:16px;margin:12px 0;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:transform .2s}
+.review-banner:hover{transform:translateY(-2px)}.review-banner.done{background:linear-gradient(135deg,#e8f8f0,#c8e6c9);cursor:default}
+.review-banner .review-count{font-size:1.8em;font-weight:800;color:var(--primary);min-width:40px;text-align:center}
+.review-banner .review-text{font-size:.92em;color:var(--text)}
+.data-mgmt{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
+.data-mgmt button{padding:10px 18px;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:.85em;transition:all .2s}
+.btn-export{background:#3498db;color:#fff}.btn-import{background:#2ecc71;color:#fff}.btn-data-reset{background:#e74c3c;color:#fff}
 @media(max-width:600px){.card-formula{font-size:1em}.card-wrapper{min-height:260px}.card-front,.card-back{min-height:260px;padding:16px}.nav button{padding:6px 10px;font-size:.75em}.problem-card{padding:14px}.pattern-card{padding:12px}}
 </style>
 </head>
@@ -123,6 +132,16 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 <div class="container">
 <!-- Dashboard -->
 <div id="sec-dashboard" class="section active">
+<div id="review-banner" class="review-banner" onclick="startReviewMode()">
+<div class="review-count" id="review-count">0</div>
+<div class="review-text" id="review-text">今日の復習公式 — タップして復習開始</div>
+</div>
+<div id="streak-display" class="streak-display" style="display:none">
+<span class="streak-fire">🔥</span>
+<span class="streak-num" id="streak-count">0</span>
+<span class="streak-label">日連続学習中</span>
+<span class="streak-best" id="streak-best"></span>
+</div>
 <div class="stats-grid">
 <div class="stat-card total"><div class="num" id="st-total">0</div><div class="label">全公式</div></div>
 <div class="stat-card known"><div class="num" id="st-known">0</div><div class="label">覚えた</div></div>
@@ -130,7 +149,6 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 <div class="stat-card unknown"><div class="num" id="st-unknown">0</div><div class="label">未学習</div></div>
 </div>
 <div class="progress-bar-container"><div class="seg-known" id="prog-known"></div><div class="seg-learning" id="prog-learning"></div></div>
-<div id="streak-area"></div>
 <h3 style="margin:16px 0 8px;font-size:1em">章別の進捗（公式）</h3><div id="ch-formula-stats"></div>
 <h3 style="margin:20px 0 8px;font-size:1em">問題演習の進捗</h3>
 <div class="stats-grid">
@@ -140,6 +158,13 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 </div>
 <h3 style="margin:20px 0 8px;font-size:1em">章別の進捗（問題）</h3><div id="ch-prob-stats"></div>
 <h3 style="margin:20px 0 8px;font-size:1em">おすすめ学習</h3><div id="rec-area"></div>
+<h3 style="margin:20px 0 8px;font-size:1em">データ管理</h3>
+<div class="data-mgmt">
+<button class="btn-export" onclick="exportData()">📥 エクスポート</button>
+<button class="btn-import" onclick="document.getElementById('import-file').click()">📤 インポート</button>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
+<button class="btn-data-reset" onclick="resetAllData()">🗑 リセット</button>
+</div>
 </div>
 <!-- Cards -->
 <div id="sec-cards" class="section">
@@ -836,9 +861,124 @@ function saveState(){
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
 }
 function gfs(id){return state.formulaStatus[id]||'new';}
-function sfs(id,st){state.formulaStatus[id]=st;saveState();}
+function sfs(id,st){
+  state.formulaStatus[id]=st;saveState();
+  const correct=(st==='known'||st==='learning');
+  updateSRS(id,correct);recordStudy();
+}
 function gps(id){return state.problemStatus[id]||'new';}
-function sps(id,st){state.problemStatus[id]=st;saveState();}
+function sps(id,st){state.problemStatus[id]=st;saveState();recordStudy();}
+
+// ====== SRS (Spaced Repetition) ======
+const SRS_KEY='math1_srs';
+const SRS_INTERVALS=[0,1,3,7,14,30,60];
+let srsData=(function(){try{return JSON.parse(localStorage.getItem(SRS_KEY))||{};}catch(e){return {};}})();
+function saveSRS(){localStorage.setItem(SRS_KEY,JSON.stringify(srsData));}
+function getSRS(id){return srsData[id]||{box:0,lastReview:null,nextReview:null};}
+function updateSRS(id,correct){
+  const d=getSRS(id);const today=new Date().toISOString().slice(0,10);
+  if(correct){d.box=Math.min(d.box+1,SRS_INTERVALS.length-1);}else{d.box=Math.max(d.box-1,0);}
+  d.lastReview=today;
+  const next=new Date();next.setDate(next.getDate()+SRS_INTERVALS[d.box]);
+  d.nextReview=next.toISOString().slice(0,10);
+  srsData[id]=d;saveSRS();
+}
+function getDueFormulas(){
+  const today=new Date().toISOString().slice(0,10);
+  return formulas.filter(f=>{
+    const st=gfs(f.id);if(st==='new')return false;
+    const d=getSRS(f.id);
+    return !d.nextReview||d.nextReview<=today;
+  });
+}
+
+// ====== STREAK ======
+const STREAK_KEY='math1_streak';
+let streakData=(function(){try{return JSON.parse(localStorage.getItem(STREAK_KEY))||{current:0,best:0,lastDate:null};}catch(e){return{current:0,best:0,lastDate:null};}})();
+function saveStreak(){localStorage.setItem(STREAK_KEY,JSON.stringify(streakData));}
+function checkStreak(){
+  if(!streakData.lastDate)return;
+  const today=new Date().toISOString().slice(0,10);
+  const last=new Date(streakData.lastDate);
+  last.setDate(last.getDate()+1);
+  const expected=last.toISOString().slice(0,10);
+  if(today>expected){streakData.current=0;saveStreak();}
+}
+function recordStudy(){
+  const today=new Date().toISOString().slice(0,10);
+  if(streakData.lastDate===today)return;
+  if(streakData.lastDate){
+    const last=new Date(streakData.lastDate);last.setDate(last.getDate()+1);
+    streakData.current=(last.toISOString().slice(0,10)===today)?(streakData.current+1):1;
+  }else{streakData.current=1;}
+  streakData.lastDate=today;
+  if(streakData.current>streakData.best)streakData.best=streakData.current;
+  saveStreak();renderStreak();
+}
+function renderStreak(){
+  const el=document.getElementById('streak-display');
+  if(streakData.current>0){
+    el.style.display='flex';
+    document.getElementById('streak-count').textContent=streakData.current;
+    document.getElementById('streak-best').textContent=streakData.best>streakData.current?'最高記録: '+streakData.best+'日':'';
+  }else{el.style.display='none';}
+}
+
+// ====== REVIEW BANNER ======
+function updateReviewBanner(){
+  const due=getDueFormulas();
+  const banner=document.getElementById('review-banner');
+  const countEl=document.getElementById('review-count');
+  const textEl=document.getElementById('review-text');
+  countEl.textContent=due.length;
+  if(due.length===0){
+    banner.classList.add('done');
+    textEl.textContent='今日の復習は完了です！';
+  }else{
+    banner.classList.remove('done');
+    textEl.textContent='今日の復習公式 — タップして復習開始';
+  }
+}
+function startReviewMode(){
+  const due=getDueFormulas();
+  if(due.length===0)return;
+  filteredFormulas=due;currentCardIndex=0;
+  document.getElementById('cf-ch').value='all';
+  document.getElementById('cf-st').value='all';
+  const btns=document.querySelectorAll('.nav button');
+  showSection('cards',btns[1]);
+  renderCard();
+}
+
+// ====== DATA MANAGEMENT ======
+function exportData(){
+  const data={state:state,srs:srsData,streak:streakData,exportDate:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='math1_progress_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(a.href);
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.state){state=data.state;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
+      if(data.srs){srsData=data.srs;saveSRS();}
+      if(data.streak){streakData=data.streak;saveStreak();}
+      updateDashboard();alert('インポートしました！');
+    }catch(err){alert('ファイルの読み込みに失敗しました');}
+  };reader.readAsText(file);input.value='';
+}
+function resetAllData(){
+  if(!confirm('本当にすべての学習データをリセットしますか？この操作は取り消せません。'))return;
+  state={formulaStatus:{},problemStatus:{}};
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  srsData={};saveSRS();
+  streakData={current:0,best:0,lastDate:null};saveStreak();
+  updateDashboard();alert('リセットしました。');
+}
 
 const CH_NAMES={ch1:'第1章 数と式',ch2:'第2章 集合と命題',ch3:'第3章 2次関数',ch4:'第4章 図形と計量',ch5:'第5章 データの分析',chX:'総合演習'};
 const CHAPTERS=['ch1','ch2','ch3','ch4','ch5'];
@@ -929,6 +1069,8 @@ function updateDashboard(){
     ra.innerHTML+='<div class="rec-card"><h4>未学習の公式: '+newFs.length+'個</h4><p>公式カードで学習しましょう</p></div>';
   }
   if(!ra.innerHTML){ra.innerHTML='<div class="rec-card"><h4>素晴らしい!</h4><p>全体的によく学習できています</p></div>';}
+  renderStreak();
+  updateReviewBanner();
 }
 
 // ====== FORMULA CARDS ======
@@ -1036,6 +1178,8 @@ function answerQuiz(idx){
   if(quizState.answered)return;quizState.answered=true;
   const q=quizState.questions[quizState.current];const ok=idx===q.answer;
   if(ok)quizState.correct++;else quizState.wrong++;
+  if(q.formulaId){updateSRS(q.formulaId,ok);}
+  recordStudy();
   document.querySelectorAll('.quiz-option').forEach((el,i)=>{el.classList.add('disabled');if(i===q.answer)el.classList.add('correct');if(i===idx&&!ok)el.classList.add('wrong');});
   const ra=document.getElementById('qr-area');
   const nxt=quizState.current+1<quizState.questions.length?'次の問題 →':'結果を見る';
@@ -1093,6 +1237,7 @@ document.addEventListener('keydown',e=>{
 });
 
 // ====== INIT ======
+checkStreak();
 updateDashboard();
 </script>
 </body>
