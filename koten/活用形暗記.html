@@ -1374,9 +1374,11 @@ let fcIndex = 0;
 function buildFlashcards(category) {
   const cards = [];
   if (category === "doushi") {
+    const formProps = ["mizen","renyou","shushi","rentai","izen","meirei"];
     DATA.doushi.forEach(v => {
       FORMS.forEach((f, i) => {
-        cards.push({label: `動詞 - ${v.type}`, question: `「${v.example}」の${f}は？`, answer: v.row[i], hint: v.type});
+        const answer = (v[formProps[i]] !== undefined) ? v[formProps[i]] : v.row[i];
+        cards.push({label: `動詞 - ${v.type}`, question: `「${v.example}」の${f}は？`, answer: answer, hint: v.type});
       });
     });
   } else if (category === "keiyoushi") {
