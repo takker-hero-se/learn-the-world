@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>りくとの学習アプリ</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Hiragino Sans', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.container { max-width: 600px; width: 100%; }
+h1 { color: #fff; text-align: center; font-size: 2em; margin-bottom: 30px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; text-decoration: none; display: block; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; }
+.card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+.card h2 { color: #333; font-size: 1.3em; margin-bottom: 8px; }
+.card p { color: #666; font-size: 0.95em; line-height: 1.5; }
+.tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; margin-right: 6px; }
+.tag-english { background: #dbeafe; color: #1d4ed8; }
+.tag-koten { background: #fce7f3; color: #be185d; }
+.tag-math { background: #d1fae5; color: #047857; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📚 りくとの学習アプリ</h1>
+  <a class="card" href="EnglishStudy/WordQuest.html">
+    <div><span class="tag tag-english">英語</span></div>
+    <h2>WordQuest - 英単語学習</h2>
+    <p>NGSL・BSL・NAWL・TSL対応の英単語フラッシュカード＆クイズ</p>
+  </a>
+  <a class="card" href="koten/古文単語学習アプリ.html">
+    <div><span class="tag tag-koten">古典</span></div>
+    <h2>古文単語マスター</h2>
+    <p>古文単語147語のフラッシュカード・4択クイズ・一覧表</p>
+  </a>
+  <a class="card" href="koten/活用形暗記.html">
+    <div><span class="tag tag-koten">古典</span></div>
+    <h2>活用形暗記</h2>
+    <p>動詞・形容詞・形容動詞・助動詞の活用形を暗記</p>
+  </a>
+  <a class="card" href="mathmaticsI/数学I_学習アプリ.html">
+    <div><span class="tag tag-math">数学</span></div>
+    <h2>数学I 学習アプリ</h2>
+    <p>数学Iの問題演習とパターン学習</p>
+  </a>
+</div>
+</body>
+</html>
