@@ -599,6 +599,117 @@ tr:hover td { background: #f5efe5; }
   margin-bottom: 8px;
 }
 
+/* ===== Streak ===== */
+.streak-display {
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.streak-display .streak-current {
+  font-size: 2em;
+  font-weight: bold;
+  color: var(--primary);
+}
+
+.streak-display .streak-best {
+  font-size: 0.85em;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+/* ===== Review Banner ===== */
+.review-banner {
+  background: linear-gradient(135deg, #fff8e1, #ffe0b2);
+  border: 2px solid #ffb74d;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.review-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.review-banner .review-count {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #e65100;
+}
+
+.review-banner .review-label {
+  font-size: 0.9em;
+  color: #bf360c;
+  margin-top: 4px;
+}
+
+.review-banner.complete {
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  border-color: #66bb6a;
+  cursor: default;
+}
+
+.review-banner.complete:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.review-banner.complete .review-count {
+  color: var(--correct);
+  font-size: 1.2em;
+}
+
+.review-banner.complete .review-label {
+  color: #2e7d32;
+}
+
+/* ===== Data Management ===== */
+.data-management {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.data-management button {
+  padding: 8px 18px;
+  border: 2px solid var(--border);
+  background: white;
+  color: var(--text);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82em;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.data-management button:hover {
+  border-color: var(--primary);
+  background: #faf5ed;
+}
+
+.data-management button.danger {
+  border-color: var(--wrong);
+  color: var(--wrong);
+}
+
+.data-management button.danger:hover {
+  background: #fde8e8;
+}
+
+.data-management input[type="file"] {
+  display: none;
+}
+
 @media (max-width: 600px) {
   .quiz-choices { grid-template-columns: 1fr; }
   .flashcard .word { font-size: 1.8em; }
@@ -626,6 +737,14 @@ tr:hover td { background: #f5efe5; }
 
   <!-- ===== DASHBOARD ===== -->
   <div id="dashboard" class="section active">
+    <div class="review-banner" id="review-banner" onclick="startReviewMode()">
+      <div class="review-count" id="review-count">0</div>
+      <div class="review-label" id="review-label">今日の復習単語 &#8212; タップして復習開始</div>
+    </div>
+    <div class="streak-display" id="streak-display">
+      <div class="streak-current" id="streak-current">&#128293; 0日連続</div>
+      <div class="streak-best" id="streak-best">最高記録: 0日</div>
+    </div>
     <div class="stats-grid">
       <div class="stat-card total"><div class="num" id="d-total">0</div><div class="label">全単語数</div></div>
       <div class="stat-card known"><div class="num" id="d-known">0</div><div class="label">覚えた</div></div>
@@ -638,7 +757,12 @@ tr:hover td { background: #f5efe5; }
     </div>
     <h3 style="margin:16px 0 8px;color:var(--primary);font-size:1em;">章ごとの進捗</h3>
     <div class="chapter-list" id="chapter-list"></div>
-    <button class="reset-btn" onclick="if(confirm('学習データをリセットしますか？'))resetProgress()">学習データをリセット</button>
+    <div class="data-management">
+      <button onclick="exportData()">&#128229; エクスポート</button>
+      <button onclick="document.getElementById('import-file').click()">&#128228; インポート</button>
+      <input type="file" id="import-file" accept=".json" onchange="importData(event)">
+      <button class="danger" onclick="if(confirm('全ての学習データ（進捗・SRS・連続記録）をリセットしますか？\nこの操作は元に戻せません。'))resetAllData()">&#128465; リセット</button>
+    </div>
   </div>
 
   <!-- ===== FLASHCARD ===== -->
@@ -949,12 +1073,216 @@ function getWordStatus(no) {
 
 function setWordStatus(no, status) {
   const d = loadStatus();
+  const prev = d[no] || "unknown";
   d[no] = status;
   saveStatus(d);
+  // Update SRS when status changes
+  if (status === "known") {
+    updateSRS(no, true);
+  } else if (status === "learning" && prev === "unknown") {
+    updateSRS(no, true);
+  }
 }
 
 function resetProgress() {
   localStorage.removeItem(STORAGE_KEY);
+  updateDashboard();
+  renderTable();
+  renderFC();
+}
+
+// ===== STREAK TRACKING =====
+const STREAK_KEY = "kobun_tango_streak";
+
+function loadStreak() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STREAK_KEY));
+    return d || { current: 0, best: 0, lastDate: null };
+  } catch { return { current: 0, best: 0, lastDate: null }; }
+}
+
+function saveStreak(data) {
+  localStorage.setItem(STREAK_KEY, JSON.stringify(data));
+}
+
+function checkStreak() {
+  const streak = loadStreak();
+  if (!streak.lastDate) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const last = streak.lastDate;
+  const diffMs = new Date(today) - new Date(last);
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays > 1) {
+    streak.current = 0;
+    saveStreak(streak);
+  }
+}
+
+function recordStudy() {
+  const streak = loadStreak();
+  const today = new Date().toISOString().slice(0, 10);
+  if (streak.lastDate === today) return;
+  const last = streak.lastDate;
+  if (last) {
+    const diffMs = new Date(today) - new Date(last);
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    if (diffDays === 1) {
+      streak.current++;
+    } else if (diffDays > 1) {
+      streak.current = 1;
+    }
+  } else {
+    streak.current = 1;
+  }
+  if (streak.current > streak.best) streak.best = streak.current;
+  streak.lastDate = today;
+  saveStreak(streak);
+  renderStreak();
+}
+
+function renderStreak() {
+  const streak = loadStreak();
+  const el = document.getElementById("streak-current");
+  const bestEl = document.getElementById("streak-best");
+  if (el) el.innerHTML = `&#128293; ${streak.current}日連続`;
+  if (bestEl) bestEl.textContent = `最高記録: ${streak.best}日`;
+}
+
+// ===== SRS (Spaced Repetition System) =====
+const SRS_KEY = "kobun_tango_srs";
+const SRS_INTERVALS = [0, 1, 3, 7, 14, 30, 60];
+
+function loadSRS() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SRS_KEY));
+    return d || {};
+  } catch { return {}; }
+}
+
+function saveSRS(data) {
+  localStorage.setItem(SRS_KEY, JSON.stringify(data));
+}
+
+function getSRS(no) {
+  const all = loadSRS();
+  return all[no] || { box: 0, lastReview: null, nextReview: null };
+}
+
+function updateSRS(no, correct) {
+  const all = loadSRS();
+  const entry = all[no] || { box: 0, lastReview: null, nextReview: null };
+  const today = new Date().toISOString().slice(0, 10);
+  if (correct) {
+    entry.box = Math.min(entry.box + 1, SRS_INTERVALS.length - 1);
+  } else {
+    entry.box = Math.max(entry.box - 1, 0);
+  }
+  entry.lastReview = today;
+  const intervalDays = SRS_INTERVALS[entry.box];
+  const next = new Date();
+  next.setDate(next.getDate() + intervalDays);
+  entry.nextReview = next.toISOString().slice(0, 10);
+  all[no] = entry;
+  saveSRS(all);
+}
+
+function getDueWords() {
+  const srsData = loadSRS();
+  const today = new Date().toISOString().slice(0, 10);
+  const status = loadStatus();
+  return WORDS.filter(w => {
+    const ws = status[w.no] || "unknown";
+    if (ws === "unknown") return false;
+    const entry = srsData[w.no];
+    if (!entry || !entry.nextReview) return true;
+    return entry.nextReview <= today;
+  });
+}
+
+// ===== REVIEW BANNER =====
+function updateReviewBanner() {
+  const due = getDueWords();
+  const banner = document.getElementById("review-banner");
+  const countEl = document.getElementById("review-count");
+  const labelEl = document.getElementById("review-label");
+  if (due.length === 0) {
+    banner.classList.add("complete");
+    countEl.innerHTML = "&#10004;";
+    labelEl.textContent = "今日の復習は完了です！";
+    banner.onclick = null;
+  } else {
+    banner.classList.remove("complete");
+    countEl.textContent = due.length;
+    labelEl.innerHTML = "今日の復習単語 &#8212; タップして復習開始";
+    banner.onclick = startReviewMode;
+  }
+}
+
+function startReviewMode() {
+  const due = getDueWords();
+  if (!due.length) return;
+  // Switch to flashcard mode with due words
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById("flashcard").classList.add("active");
+  document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".nav button")[1].classList.add("active");
+  // Override flashcard list with due words
+  fcCards = due;
+  fcIdx = 0;
+  // Shuffle for variety
+  for (let i = fcCards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fcCards[i], fcCards[j]] = [fcCards[j], fcCards[i]];
+  }
+  renderFC();
+}
+
+// ===== DATA EXPORT / IMPORT =====
+function exportData() {
+  const data = {
+    status: loadStatus(),
+    srs: loadSRS(),
+    streak: loadStreak(),
+    exportDate: new Date().toISOString(),
+    version: 1
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `kobun_tango_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.status) throw new Error("Invalid format");
+      if (!confirm("現在のデータを上書きしますか？")) return;
+      saveStatus(data.status);
+      if (data.srs) saveSRS(data.srs);
+      if (data.streak) saveStreak(data.streak);
+      updateDashboard();
+      renderTable();
+      renderFC();
+      alert("データをインポートしました");
+    } catch (err) {
+      alert("データの読み込みに失敗しました。正しいバックアップファイルを選んでください。");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+
+function resetAllData() {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(SRS_KEY);
+  localStorage.removeItem(STREAK_KEY);
   updateDashboard();
   renderTable();
   renderFC();
@@ -1021,6 +1349,9 @@ function updateDashboard() {
     };
     listEl.appendChild(row);
   });
+
+  renderStreak();
+  updateReviewBanner();
 }
 
 function showSectionDirect(id) {
@@ -1114,6 +1445,7 @@ function setStatus(status) {
   if (!fcCards.length) return;
   const w = fcCards[fcIdx];
   setWordStatus(w.no, status);
+  recordStudy();
   renderFC();
 }
 
@@ -1208,6 +1540,8 @@ function answerQuiz(btn, selected, correct, q) {
     fb.className = "quiz-feedback show correct-fb";
     // Auto-update status to learning if unknown
     if (getWordStatus(q.no) === "unknown") setWordStatus(q.no, "learning");
+    updateSRS(q.no, true);
+    recordStudy();
   } else {
     btn.classList.add("wrong");
     let html = `不正解… 正解は「${correct}」`;
@@ -1215,6 +1549,8 @@ function answerQuiz(btn, selected, correct, q) {
     fb.innerHTML = html;
     fb.className = "quiz-feedback show wrong-fb";
     quizMistakes.push({ word: q.word, core: q.core, correct, selected, mode: q.mode });
+    updateSRS(q.no, false);
+    recordStudy();
   }
 
   document.getElementById("q-next").className = "quiz-next show";
@@ -1349,6 +1685,7 @@ document.addEventListener("keydown", e => {
 });
 
 // ===== INIT =====
+checkStreak();
 updateDashboard();
 renderTable();
 </script>

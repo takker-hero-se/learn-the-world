@@ -460,6 +460,142 @@
 
   .mnemonic-detail ruby { font-weight: bold; }
 
+  /* ===== Dashboard ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .stat-card .num { font-size: 2em; font-weight: 700; }
+  .stat-card .label { font-size: 0.8em; color: var(--text-light); margin-top: 4px; }
+  .stat-card.known .num { color: var(--correct); }
+  .stat-card.learning .num { color: var(--gold); }
+  .stat-card.new-items .num { color: #3498db; }
+  .stat-card.total .num { color: var(--primary); }
+
+  .progress-bar-container {
+    background: #e0e0e0;
+    border-radius: 10px;
+    height: 24px;
+    margin: 16px 0;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .progress-bar-container .seg-known {
+    background: var(--correct);
+    height: 100%;
+    transition: width 0.3s;
+  }
+
+  .progress-bar-container .seg-learning {
+    background: var(--gold);
+    height: 100%;
+    transition: width 0.3s;
+  }
+
+  .category-stats { margin: 16px 0; }
+
+  .category-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: white;
+    border-radius: 8px;
+    margin: 6px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .category-row .name { font-weight: 600; min-width: 100px; font-size: 0.9em; }
+
+  .category-row .bar-bg {
+    flex: 1;
+    background: #e0e0e0;
+    border-radius: 6px;
+    height: 16px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .category-row .bar-bg div { height: 100%; transition: width 0.3s; }
+  .category-row .pct { font-size: 0.85em; min-width: 50px; text-align: right; }
+
+  .streak-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: white;
+    border-radius: 12px;
+    padding: 14px;
+    margin: 16px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .streak-fire { font-size: 2em; }
+  .streak-num { font-size: 2em; font-weight: 700; color: var(--gold); }
+  .streak-label { font-size: 0.85em; color: var(--text-light); }
+  .streak-best { font-size: 0.8em; color: var(--text-light); margin-left: 12px; }
+
+  .review-banner {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border: 1px solid #ffcc80;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .review-banner:hover { box-shadow: 0 4px 16px rgba(243,156,18,0.2); }
+  .review-banner .review-count { font-size: 2em; font-weight: 700; color: var(--gold); }
+  .review-banner .review-text { font-size: 0.9em; color: var(--text); margin-top: 4px; }
+
+  .dashboard-section-title {
+    color: var(--primary);
+    font-size: 1.1em;
+    margin: 20px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--primary);
+  }
+
+  .data-buttons {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .data-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85em;
+    transition: all 0.2s;
+  }
+
+  .btn-export { background: var(--primary); color: white; }
+  .btn-export:hover { background: var(--primary-light); }
+  .btn-import { background: var(--gold); color: white; }
+  .btn-import:hover { background: #d68910; }
+  .btn-danger { background: var(--wrong); color: white; }
+  .btn-danger:hover { background: #c0392b; }
+
   @media (max-width: 600px) {
     .quiz-choices { grid-template-columns: 1fr; }
     .flashcard .question { font-size: 1.4em; }
@@ -475,6 +611,7 @@
 </header>
 
 <div class="nav">
+  <button onclick="showSection('dashboard')">ダッシュボード</button>
   <button class="active" onclick="showSection('flashcard')">フラッシュカード</button>
   <button onclick="showSection('quiz')">四択クイズ</button>
   <button onclick="showSection('mnemonic')">語呂合わせ</button>
@@ -482,6 +619,45 @@
 </div>
 
 <div class="container">
+
+  <!-- ========== DASHBOARD ========== -->
+  <div id="dashboard" class="section">
+    <div class="streak-bar" id="streak-display">
+      <span class="streak-fire">&#128293;</span>
+      <span class="streak-num" id="streak-current">0</span>
+      <span class="streak-label">日連続</span>
+      <span class="streak-best" id="streak-best">最長: 0日</span>
+    </div>
+
+    <div class="review-banner" id="review-banner" onclick="startReviewQuiz()">
+      <div class="review-count" id="review-count">0</div>
+      <div class="review-text">今日の復習 &#8212; タップして復習開始</div>
+    </div>
+
+    <h3 class="dashboard-section-title">学習状況</h3>
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card total"><div class="num" id="stat-total">0</div><div class="label">総アイテム</div></div>
+      <div class="stat-card known"><div class="num" id="stat-known">0</div><div class="label">習得済み</div></div>
+      <div class="stat-card learning"><div class="num" id="stat-learning">0</div><div class="label">学習中</div></div>
+      <div class="stat-card new-items"><div class="num" id="stat-new">0</div><div class="label">未学習</div></div>
+    </div>
+
+    <div class="progress-bar-container" id="overall-progress">
+      <div class="seg-known" id="seg-known"></div>
+      <div class="seg-learning" id="seg-learning"></div>
+    </div>
+
+    <h3 class="dashboard-section-title">カテゴリ別進捗</h3>
+    <div class="category-stats" id="category-stats"></div>
+
+    <h3 class="dashboard-section-title">データ管理</h3>
+    <div class="data-buttons">
+      <button class="btn-export" onclick="exportData()">&#128190; エクスポート</button>
+      <button class="btn-import" onclick="importData()">&#128194; インポート</button>
+      <button class="btn-danger" onclick="resetAllData()">&#128465; リセット</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+  </div>
 
   <!-- ========== FLASHCARD ========== -->
   <div id="flashcard" class="section active">
@@ -849,6 +1025,348 @@ const IMI = {
 
 const FORMS = ["未然形","連用形","終止形","連体形","已然形","命令形"];
 
+// ===== ITEM KEY GENERATION =====
+function getItemKey(category, index) {
+  return category + '_' + index;
+}
+
+function getAllItemKeys() {
+  const keys = [];
+  const categories = ['doushi','keiyoushi','keiyoudoushi','jodoushi','jodoushi-setsuzoku','jodoushi-imi'];
+  categories.forEach(cat => {
+    const cards = buildFlashcards(cat);
+    cards.forEach((c, i) => {
+      keys.push({ key: getItemKey(cat, i), category: cat, card: c });
+    });
+  });
+  return keys;
+}
+
+// ===== CATEGORY LABELS =====
+const CATEGORY_LABELS = {
+  'doushi': '動詞',
+  'keiyoushi': '形容詞',
+  'keiyoudoushi': '形容動詞',
+  'jodoushi': '助動詞',
+  'jodoushi-setsuzoku': '助動詞(接続)',
+  'jodoushi-imi': '助動詞(意味)'
+};
+
+// ===== PERSISTENT MASTERY STATUS =====
+function loadStatus() {
+  try {
+    return JSON.parse(localStorage.getItem('katsuyou_status')) || {};
+  } catch(e) { return {}; }
+}
+
+function saveStatus(data) {
+  localStorage.setItem('katsuyou_status', JSON.stringify(data));
+}
+
+function getItemStatus(key) {
+  const data = loadStatus();
+  return data[key] || 'new';
+}
+
+function setItemStatus(key, status) {
+  const data = loadStatus();
+  data[key] = status;
+  saveStatus(data);
+}
+
+// ===== STREAK TRACKING =====
+function loadStreak() {
+  try {
+    return JSON.parse(localStorage.getItem('katsuyou_streak')) || { current: 0, best: 0, lastDate: null };
+  } catch(e) { return { current: 0, best: 0, lastDate: null }; }
+}
+
+function saveStreak(data) {
+  localStorage.setItem('katsuyou_streak', JSON.stringify(data));
+}
+
+function getTodayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function checkStreak() {
+  const streak = loadStreak();
+  if (!streak.lastDate) return streak;
+  const today = new Date(getTodayStr());
+  const last = new Date(streak.lastDate);
+  const diff = Math.floor((today - last) / (1000 * 60 * 60 * 24));
+  if (diff > 1) {
+    streak.current = 0;
+    saveStreak(streak);
+  }
+  return streak;
+}
+
+function recordStudy() {
+  const streak = checkStreak();
+  const today = getTodayStr();
+  if (streak.lastDate !== today) {
+    if (streak.lastDate) {
+      const last = new Date(streak.lastDate);
+      const now = new Date(today);
+      const diff = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+      if (diff === 1) {
+        streak.current++;
+      } else {
+        streak.current = 1;
+      }
+    } else {
+      streak.current = 1;
+    }
+    streak.lastDate = today;
+    if (streak.current > streak.best) streak.best = streak.current;
+    saveStreak(streak);
+  }
+}
+
+function renderStreak() {
+  const streak = checkStreak();
+  const el = document.getElementById('streak-current');
+  const bestEl = document.getElementById('streak-best');
+  if (el) el.textContent = streak.current;
+  if (bestEl) bestEl.textContent = '最長: ' + streak.best + '日';
+}
+
+// ===== SRS (Spaced Repetition System) =====
+const SRS_INTERVALS = [0, 1, 3, 7, 14, 30, 60];
+
+function loadSRS() {
+  try {
+    return JSON.parse(localStorage.getItem('katsuyou_srs')) || {};
+  } catch(e) { return {}; }
+}
+
+function saveSRS(data) {
+  localStorage.setItem('katsuyou_srs', JSON.stringify(data));
+}
+
+function getSRS(key) {
+  const data = loadSRS();
+  return data[key] || { box: 0, lastReview: null, nextReview: null };
+}
+
+function updateSRS(key, correct) {
+  const data = loadSRS();
+  const srs = data[key] || { box: 0, lastReview: null, nextReview: null };
+  const today = getTodayStr();
+
+  if (correct) {
+    srs.box = Math.min(srs.box + 1, SRS_INTERVALS.length - 1);
+  } else {
+    srs.box = Math.max(srs.box - 1, 0);
+  }
+
+  srs.lastReview = today;
+  const interval = SRS_INTERVALS[srs.box];
+  const next = new Date(today);
+  next.setDate(next.getDate() + interval);
+  srs.nextReview = next.getFullYear() + '-' + String(next.getMonth()+1).padStart(2,'0') + '-' + String(next.getDate()).padStart(2,'0');
+
+  data[key] = srs;
+  saveSRS(data);
+
+  // Update mastery status based on SRS box
+  if (srs.box >= 3) {
+    setItemStatus(key, 'known');
+  } else if (srs.box >= 1) {
+    setItemStatus(key, 'learning');
+  }
+}
+
+function getDueItems() {
+  const srsData = loadSRS();
+  const today = getTodayStr();
+  const due = [];
+  const allItems = getAllItemKeys();
+
+  allItems.forEach(item => {
+    const srs = srsData[item.key];
+    if (srs && srs.nextReview && srs.nextReview <= today) {
+      due.push(item);
+    }
+  });
+  return due;
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const statusData = loadStatus();
+  const allItems = getAllItemKeys();
+  const total = allItems.length;
+
+  let knownCount = 0, learningCount = 0, newCount = 0;
+  allItems.forEach(item => {
+    const s = statusData[item.key] || 'new';
+    if (s === 'known') knownCount++;
+    else if (s === 'learning') learningCount++;
+    else newCount++;
+  });
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-known').textContent = knownCount;
+  document.getElementById('stat-learning').textContent = learningCount;
+  document.getElementById('stat-new').textContent = newCount;
+
+  // Overall progress bar
+  const knownPct = total > 0 ? (knownCount / total * 100) : 0;
+  const learningPct = total > 0 ? (learningCount / total * 100) : 0;
+  document.getElementById('seg-known').style.width = knownPct + '%';
+  document.getElementById('seg-learning').style.width = learningPct + '%';
+
+  // Per-category progress
+  const catStats = {};
+  allItems.forEach(item => {
+    const baseCat = item.category;
+    if (!catStats[baseCat]) catStats[baseCat] = { total: 0, known: 0, learning: 0 };
+    catStats[baseCat].total++;
+    const s = statusData[item.key] || 'new';
+    if (s === 'known') catStats[baseCat].known++;
+    else if (s === 'learning') catStats[baseCat].learning++;
+  });
+
+  const catContainer = document.getElementById('category-stats');
+  catContainer.innerHTML = '';
+  // Show main 4 categories grouped
+  const displayCats = ['doushi','keiyoushi','keiyoudoushi','jodoushi'];
+  displayCats.forEach(cat => {
+    const stats = catStats[cat];
+    if (!stats) return;
+    const kPct = stats.total > 0 ? (stats.known / stats.total * 100) : 0;
+    const lPct = stats.total > 0 ? (stats.learning / stats.total * 100) : 0;
+
+    const row = document.createElement('div');
+    row.className = 'category-row';
+    row.innerHTML = `
+      <span class="name">${CATEGORY_LABELS[cat]}</span>
+      <div class="bar-bg">
+        <div style="width:${kPct}%;background:var(--correct);"></div>
+        <div style="width:${lPct}%;background:var(--gold);"></div>
+      </div>
+      <span class="pct">${Math.round(kPct + lPct)}%</span>
+    `;
+    catContainer.appendChild(row);
+  });
+
+  // Show supplementary categories
+  ['jodoushi-setsuzoku','jodoushi-imi'].forEach(cat => {
+    const stats = catStats[cat];
+    if (!stats) return;
+    const kPct = stats.total > 0 ? (stats.known / stats.total * 100) : 0;
+    const lPct = stats.total > 0 ? (stats.learning / stats.total * 100) : 0;
+
+    const row = document.createElement('div');
+    row.className = 'category-row';
+    row.innerHTML = `
+      <span class="name">${CATEGORY_LABELS[cat]}</span>
+      <div class="bar-bg">
+        <div style="width:${kPct}%;background:var(--correct);"></div>
+        <div style="width:${lPct}%;background:var(--gold);"></div>
+      </div>
+      <span class="pct">${Math.round(kPct + lPct)}%</span>
+    `;
+    catContainer.appendChild(row);
+  });
+
+  // Review banner
+  const dueItems = getDueItems();
+  document.getElementById('review-count').textContent = dueItems.length;
+
+  // Streak
+  renderStreak();
+}
+
+function startReviewQuiz() {
+  const dueItems = getDueItems();
+  if (dueItems.length === 0) {
+    alert('今日の復習アイテムはありません！');
+    return;
+  }
+
+  // Switch to quiz section
+  showSectionById('quiz');
+
+  // Build quiz from due items
+  let pool = dueItems.map(item => {
+    const c = item.card;
+    if (c.answer === '○') return null;
+    return { ...c, category: item.category, itemKey: item.key };
+  }).filter(Boolean);
+
+  // Shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  const count = Math.min(pool.length, 20);
+  quizQuestions = pool.slice(0, count);
+  quizIndex = 0;
+  quizScore = 0;
+  quizMistakes = [];
+  isReviewMode = true;
+
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-area').style.display = 'block';
+  document.getElementById('quiz-result').style.display = 'none';
+  renderQuiz();
+}
+
+// ===== DATA EXPORT / IMPORT / RESET =====
+function exportData() {
+  const data = {
+    status: loadStatus(),
+    streak: loadStreak(),
+    srs: loadSRS(),
+    exportDate: getTodayStr()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'katsuyou_data_' + getTodayStr() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  document.getElementById('import-file').click();
+}
+
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.status) localStorage.setItem('katsuyou_status', JSON.stringify(data.status));
+      if (data.streak) localStorage.setItem('katsuyou_streak', JSON.stringify(data.streak));
+      if (data.srs) localStorage.setItem('katsuyou_srs', JSON.stringify(data.srs));
+      alert('データをインポートしました！');
+      renderDashboard();
+    } catch(err) {
+      alert('インポートに失敗しました。ファイル形式を確認してください。');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetAllData() {
+  if (!confirm('すべての学習データをリセットしますか？この操作は元に戻せません。')) return;
+  localStorage.removeItem('katsuyou_status');
+  localStorage.removeItem('katsuyou_streak');
+  localStorage.removeItem('katsuyou_srs');
+  alert('データをリセットしました。');
+  renderDashboard();
+}
+
 // ===== FLASHCARD =====
 let fcCards = [];
 let fcIndex = 0;
@@ -936,14 +1454,15 @@ let quizQuestions = [];
 let quizIndex = 0;
 let quizScore = 0;
 let quizMistakes = [];
+let isReviewMode = false;
 
 function buildQuizPool(categories) {
   const pool = [];
   categories.forEach(cat => {
     const cards = buildFlashcards(cat);
-    cards.forEach(c => {
+    cards.forEach((c, i) => {
       if (c.answer !== "○") {
-        pool.push({...c, category: cat});
+        pool.push({...c, category: cat, itemKey: getItemKey(cat, i)});
       }
     });
   });
@@ -967,6 +1486,7 @@ function startQuiz() {
   quizIndex = 0;
   quizScore = 0;
   quizMistakes = [];
+  isReviewMode = false;
 
   document.getElementById("quiz-setup").style.display = "none";
   document.getElementById("quiz-area").style.display = "block";
@@ -1026,8 +1546,9 @@ function answerQuiz(btn, selected, correct) {
     if (b.textContent === correct) b.classList.add("correct");
   });
 
+  const isCorrect = selected === correct;
   const fb = document.getElementById("q-feedback");
-  if (selected === correct) {
+  if (isCorrect) {
     quizScore++;
     fb.textContent = "正解！";
     fb.className = "quiz-feedback show correct-fb";
@@ -1037,6 +1558,15 @@ function answerQuiz(btn, selected, correct) {
     fb.className = "quiz-feedback show wrong-fb";
     quizMistakes.push({question: quizQuestions[quizIndex].question, label: quizQuestions[quizIndex].label, correct, selected});
   }
+
+  // Update SRS and mastery status
+  const q = quizQuestions[quizIndex];
+  if (q.itemKey) {
+    updateSRS(q.itemKey, isCorrect);
+  }
+
+  // Record daily study
+  recordStudy();
 
   document.getElementById("q-next").className = "quiz-next show";
 }
@@ -1065,6 +1595,9 @@ function showResult() {
   }
 
   html += `<br><button class="btn-start" onclick="resetQuiz()">もう一度</button>`;
+  if (isReviewMode) {
+    html += ` <button class="btn-start" style="background:var(--primary);margin-left:8px;" onclick="showSectionById('dashboard')">ダッシュボードへ</button>`;
+  }
   const res = document.getElementById("quiz-result");
   res.innerHTML = html;
   res.style.display = "block";
@@ -1081,6 +1614,20 @@ function showSection(id) {
   document.getElementById(id).classList.add("active");
   document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
   event.target.classList.add("active");
+  if (id === 'dashboard') renderDashboard();
+}
+
+function showSectionById(id) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  const navButtons = document.querySelectorAll(".nav button");
+  navButtons.forEach(b => {
+    b.classList.remove("active");
+    if (b.textContent.includes('四択クイズ') && id === 'quiz') b.classList.add("active");
+    if (b.textContent.includes('ダッシュボード') && id === 'dashboard') b.classList.add("active");
+    if (b.textContent.includes('フラッシュカード') && id === 'flashcard') b.classList.add("active");
+  });
+  if (id === 'dashboard') renderDashboard();
 }
 
 // ===== KEYBOARD =====
