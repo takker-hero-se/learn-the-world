@@ -1,0 +1,16 @@
+# Large binary files
+*.pdf
+*.jpg
+*.jpeg
+*.png
+
+# Temporary/working directories
+koten/pages/
+koten/pages_temp/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Translation cache (large)
+EnglishStudy/translation_cache.json

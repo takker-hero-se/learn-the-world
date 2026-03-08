@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>古文 活用形マスター</title>
+<style>
+  :root {
+    --primary: #2d5016;
+    --primary-light: #4a8c28;
+    --accent: #c0392b;
+    --bg: #faf8f0;
+    --card-bg: #ffffff;
+    --text: #2c2c2c;
+    --text-light: #666;
+    --border: #ddd;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --gold: #f39c12;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  }
+
+  header h1 { font-size: 1.6em; margin-bottom: 4px; }
+  header p { font-size: 0.85em; opacity: 0.9; }
+
+  .nav {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    flex-wrap: wrap;
+    background: white;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav button {
+    padding: 10px 20px;
+    border: 2px solid var(--primary);
+    background: white;
+    color: var(--primary);
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: bold;
+    transition: all 0.2s;
+  }
+
+  .nav button:hover, .nav button.active {
+    background: var(--primary);
+    color: white;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ===== Flashcard ===== */
+  .flashcard-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .flashcard-controls select, .flashcard-controls button {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9em;
+    background: white;
+    cursor: pointer;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #eee;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .progress-bar .fill {
+    height: 100%;
+    background: var(--primary-light);
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+
+  .flashcard {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    cursor: pointer;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.15s;
+    user-select: none;
+    position: relative;
+  }
+
+  .flashcard:hover { transform: translateY(-2px); }
+
+  .flashcard .label {
+    font-size: 0.8em;
+    color: var(--text-light);
+    margin-bottom: 8px;
+    background: #f0f0f0;
+    padding: 4px 12px;
+    border-radius: 12px;
+  }
+
+  .flashcard .question {
+    font-size: 1.8em;
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
+
+  .flashcard .hint {
+    font-size: 0.9em;
+    color: var(--text-light);
+  }
+
+  .flashcard .answer-area {
+    margin-top: 20px;
+    font-size: 1.5em;
+    color: var(--accent);
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .flashcard.revealed .answer-area { opacity: 1; }
+
+  .flashcard .tap-hint {
+    position: absolute;
+    bottom: 15px;
+    font-size: 0.75em;
+    color: #bbb;
+  }
+
+  .card-nav {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .card-nav button {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+  }
+
+  .btn-prev { background: #eee; color: var(--text); }
+  .btn-next { background: var(--primary); color: white; }
+  .btn-prev:hover { background: #ddd; }
+  .btn-next:hover { background: var(--primary-light); }
+
+  .card-counter {
+    text-align: center;
+    margin-top: 12px;
+    color: var(--text-light);
+    font-size: 0.9em;
+  }
+
+  /* ===== Quiz ===== */
+  .quiz-setup {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+
+  .quiz-setup h2 { margin-bottom: 20px; color: var(--primary); }
+
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+    margin: 0 auto 20px;
+  }
+
+  .quiz-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: #f8f8f8;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95em;
+  }
+
+  .quiz-options input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+  }
+
+  .btn-start {
+    padding: 14px 48px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-start:hover { background: #a93226; }
+
+  .quiz-area { display: none; }
+
+  .quiz-question {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .quiz-question .q-label {
+    font-size: 0.85em;
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+
+  .quiz-question .q-text {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  .quiz-question .q-sub {
+    color: var(--text-light);
+    font-size: 0.95em;
+  }
+
+  .quiz-choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .quiz-choices button {
+    padding: 16px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .quiz-choices button:hover { border-color: var(--primary); background: #f0f8e8; }
+  .quiz-choices button.correct { border-color: var(--correct); background: #e8f8e8; color: var(--correct); font-weight: bold; }
+  .quiz-choices button.wrong { border-color: var(--wrong); background: #fde8e8; color: var(--wrong); }
+  .quiz-choices button:disabled { cursor: default; }
+
+  .quiz-feedback {
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct-fb { background: #e8f8e8; color: var(--correct); }
+  .quiz-feedback.wrong-fb { background: #fde8e8; color: var(--wrong); }
+
+  .quiz-next {
+    display: none;
+    margin: 0 auto;
+    padding: 12px 36px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .quiz-next.show { display: block; }
+
+  /* ===== Result ===== */
+  .result-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+
+  .result-card h2 { font-size: 1.8em; margin-bottom: 8px; }
+
+  .result-score {
+    font-size: 3em;
+    font-weight: bold;
+    color: var(--primary);
+    margin: 16px 0;
+  }
+
+  .result-score .total { font-size: 0.5em; color: var(--text-light); }
+
+  .result-detail {
+    margin: 20px 0;
+    font-size: 0.95em;
+    color: var(--text-light);
+  }
+
+  .mistakes-list {
+    text-align: left;
+    max-width: 500px;
+    margin: 20px auto;
+  }
+
+  .mistakes-list h3 {
+    color: var(--wrong);
+    margin-bottom: 10px;
+    font-size: 1em;
+  }
+
+  .mistake-item {
+    background: #fff5f5;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 0.9em;
+    border-left: 3px solid var(--wrong);
+  }
+
+  .mistake-item .correct-ans { color: var(--correct); font-weight: bold; }
+
+  /* ===== Table ===== */
+  .ref-section { margin-bottom: 30px; }
+  .ref-section h2 {
+    color: var(--primary);
+    margin-bottom: 12px;
+    font-size: 1.2em;
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 6px;
+  }
+
+  .ref-table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    font-size: 0.88em;
+  }
+
+  th {
+    background: var(--primary);
+    color: white;
+    padding: 10px 8px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 8px;
+    border: 1px solid #eee;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  tr:nth-child(even) td { background: #fafaf5; }
+  tr:hover td { background: #f0f8e8; }
+
+  td:first-child, th:first-child {
+    font-weight: bold;
+    background: #f5f0e0;
+    text-align: left;
+    padding-left: 12px;
+  }
+
+  th:first-child { background: #1a3a0a; }
+
+  .sub-header td {
+    background: #f0e8d0 !important;
+    font-weight: bold;
+    font-size: 0.85em;
+    color: var(--primary);
+  }
+
+  /* ===== Mnemonic ===== */
+  .mnemonic-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+
+  .mnemonic-card h3 {
+    color: var(--primary);
+    margin-bottom: 10px;
+    font-size: 1.1em;
+  }
+
+  .mnemonic-text {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: var(--accent);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+
+  .mnemonic-detail {
+    font-size: 0.9em;
+    color: var(--text-light);
+    line-height: 1.7;
+  }
+
+  .mnemonic-detail ruby { font-weight: bold; }
+
+  @media (max-width: 600px) {
+    .quiz-choices { grid-template-columns: 1fr; }
+    .flashcard .question { font-size: 1.4em; }
+    .container { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>古文 活用形マスター</h1>
+  <p>体系古典文法 学習ノート 準拠</p>
+</header>
+
+<div class="nav">
+  <button class="active" onclick="showSection('flashcard')">フラッシュカード</button>
+  <button onclick="showSection('quiz')">四択クイズ</button>
+  <button onclick="showSection('mnemonic')">語呂合わせ</button>
+  <button onclick="showSection('reference')">一覧表</button>
+</div>
+
+<div class="container">
+
+  <!-- ========== FLASHCARD ========== -->
+  <div id="flashcard" class="section active">
+    <div class="flashcard-controls">
+      <select id="fc-category" onchange="initFlashcards()">
+        <option value="doushi">動詞の活用</option>
+        <option value="keiyoushi">形容詞の活用</option>
+        <option value="keiyoudoushi">形容動詞の活用</option>
+        <option value="jodoushi">助動詞の活用</option>
+        <option value="jodoushi-setsuzoku">助動詞の接続</option>
+        <option value="jodoushi-imi">助動詞の意味</option>
+      </select>
+      <button onclick="shuffleCards()">シャッフル</button>
+    </div>
+    <div class="progress-bar"><div class="fill" id="fc-progress"></div></div>
+    <div class="flashcard" id="flashcard-main" onclick="toggleReveal()">
+      <div class="label" id="fc-label"></div>
+      <div class="question" id="fc-question"></div>
+      <div class="hint" id="fc-hint"></div>
+      <div class="answer-area" id="fc-answer"></div>
+      <div class="tap-hint">タップで答えを表示</div>
+    </div>
+    <div class="card-nav">
+      <button class="btn-prev" onclick="prevCard()">&#9664; 前へ</button>
+      <button class="btn-next" onclick="nextCard()">次へ &#9654;</button>
+    </div>
+    <div class="card-counter" id="fc-counter"></div>
+  </div>
+
+  <!-- ========== QUIZ ========== -->
+  <div id="quiz" class="section">
+    <div class="quiz-setup" id="quiz-setup">
+      <h2>四択クイズ</h2>
+      <p style="margin-bottom:16px;color:#666;">出題範囲を選んでください</p>
+      <div class="quiz-options">
+        <label><input type="checkbox" value="doushi" checked> 動詞の活用</label>
+        <label><input type="checkbox" value="keiyoushi" checked> 形容詞の活用</label>
+        <label><input type="checkbox" value="keiyoudoushi" checked> 形容動詞の活用</label>
+        <label><input type="checkbox" value="jodoushi" checked> 助動詞の活用</label>
+        <label><input type="checkbox" value="jodoushi-setsuzoku"> 助動詞の接続</label>
+        <label><input type="checkbox" value="jodoushi-imi"> 助動詞の意味</label>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label>問題数: <select id="quiz-count">
+          <option value="10">10問</option>
+          <option value="20" selected>20問</option>
+          <option value="30">30問</option>
+          <option value="50">全問</option>
+        </select></label>
+      </div>
+      <button class="btn-start" onclick="startQuiz()">スタート</button>
+    </div>
+    <div class="quiz-area" id="quiz-area">
+      <div class="progress-bar"><div class="fill" id="quiz-progress"></div></div>
+      <div class="quiz-question">
+        <div class="q-label" id="q-label"></div>
+        <div class="q-text" id="q-text"></div>
+        <div class="q-sub" id="q-sub"></div>
+      </div>
+      <div class="quiz-choices" id="q-choices"></div>
+      <div class="quiz-feedback" id="q-feedback"></div>
+      <button class="quiz-next" id="q-next" onclick="nextQuizQuestion()">次の問題 &#9654;</button>
+    </div>
+    <div class="result-card" id="quiz-result" style="display:none;"></div>
+  </div>
+
+  <!-- ========== MNEMONIC ========== -->
+  <div id="mnemonic" class="section">
+    <h2 style="color:var(--primary);margin-bottom:16px;">語呂合わせ・暗記のコツ</h2>
+
+    <div class="mnemonic-card">
+      <h3>動詞の活用 9種類の覚え方</h3>
+      <div class="mnemonic-text">「よ　か　さ　な　ら　し　し　か　か」</div>
+      <div class="mnemonic-detail">
+        四段・上一段・上二段・下一段・下二段・カ変・サ変・ナ変・ラ変<br>
+        <b>四</b>(よ)つの段 → <b>上一</b>(か・み)段 → <b>上二</b>(か・み)段 → <b>下一</b>(し・も)段 → <b>下二</b>(し・も)段 → <b>カ</b>変 → <b>サ</b>変 → <b>ナ</b>変 → <b>ラ</b>変
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>四段活用の活用語尾</h3>
+      <div class="mnemonic-text">あ・い・う・う・え・え</div>
+      <div class="mnemonic-detail">
+        未然「a」連用「i」終止「u」連体「u」已然「e」命令「e」<br>
+        例: 書<b>か</b>・書<b>き</b>・書<b>く</b>・書<b>く</b>・書<b>け</b>・書<b>け</b>
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>上二段活用の活用語尾</h3>
+      <div class="mnemonic-text">い・い・う・うる・うれ・いよ</div>
+      <div class="mnemonic-detail">
+        例: 起<b>き</b>・起<b>き</b>・起<b>く</b>・起<b>くる</b>・起<b>くれ</b>・起<b>きよ</b>
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>下二段活用の活用語尾</h3>
+      <div class="mnemonic-text">え・え・う・うる・うれ・えよ</div>
+      <div class="mnemonic-detail">
+        例: 受<b>け</b>・受<b>け</b>・受<b>く</b>・受<b>くる</b>・受<b>くれ</b>・受<b>けよ</b>
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>カ行変格活用「来(く)」</h3>
+      <div class="mnemonic-text">こ・き・く・くる・くれ・こよ</div>
+      <div class="mnemonic-detail">
+        「<b>こ</b>ない・<b>き</b>ます・<b>く</b>る・<b>くる</b>とき・<b>くれ</b>ば・<b>こ</b>い」と現代語で対応させて覚える
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>サ行変格活用「す」</h3>
+      <div class="mnemonic-text">せ・し・す・する・すれ・せよ</div>
+      <div class="mnemonic-detail">
+        現代語「する」の活用とほぼ同じ！
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>ナ行変格活用「死ぬ・往(い)ぬ」</h3>
+      <div class="mnemonic-text">な・に・ぬ・ぬる・ぬれ・ね</div>
+      <div class="mnemonic-detail">
+        「な行」を順番に: <b>な・に・ぬ</b>、ぬ<b>る</b>・ぬ<b>れ</b>・<b>ね</b>
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>ラ行変格活用「あり・をり・はべり・いまそかり」</h3>
+      <div class="mnemonic-text">ら・り・り・る・れ・れ</div>
+      <div class="mnemonic-detail">
+        ラ変動詞は4語だけ!「<b>あり・をり・はべり・いまそかり</b>」<br>
+        「あを(青)はべり いまそかり」で覚える
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>形容詞 ク活用の活用語尾</h3>
+      <div class="mnemonic-text">(く)から・く・し・き・けれ・○</div>
+      <div class="mnemonic-detail">
+        カリ活用（未然・連用）: から・かり<br>
+        例: 美し<b>く</b>(から)・美し<b>く</b>・美し<b></b>・美し<b>き</b>・美し<b>けれ</b>
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>形容詞 シク活用の活用語尾</h3>
+      <div class="mnemonic-text">(しく)しから・しく・し・しき・しけれ・○</div>
+      <div class="mnemonic-detail">
+        ク活用に「し」がつく！<br>
+        例: 楽<b>しく</b>(しから)・楽<b>しく</b>・楽<b>し</b>・楽<b>しき</b>・楽<b>しけれ</b>
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>助動詞の接続 まとめ</h3>
+      <div class="mnemonic-text">「未然にムズムズ　さすらじまほし」</div>
+      <div class="mnemonic-detail">
+        <b>未然形接続</b>: る・らる・す・さす・しむ・ず・じ・む・むず・まし・まほし<br><br>
+        <b>連用形接続</b>: き・けり・つ・ぬ・たり(完了)・たし・けむ<br>
+        → 「<b>き・けり</b>つ<b>ぬ</b>たり　た<b>し</b>けむ」<br><br>
+        <b>終止形接続</b>: べし・まじ・らし・めり・なり(伝聞推定)<br>
+        → 「<b>べし・まじ</b>ら<b>し</b>めり<b>なり</b>」<br><br>
+        <b>連体形接続</b>: なり(断定)・たり(断定)・ごとし<br>
+        → 断定の「なり・たり」とごとし
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>「る・らる」の4つの意味</h3>
+      <div class="mnemonic-text">受・尊・自・可</div>
+      <div class="mnemonic-detail">
+        <b>受</b>身・<b>尊</b>敬・<b>自</b>発・<b>可</b>能<br>
+        「受尊自可(じゅそんじか)」と音読みで覚える
+      </div>
+    </div>
+
+    <div class="mnemonic-card">
+      <h3>「べし」の6つの意味</h3>
+      <div class="mnemonic-text">す・い・か・と・め・た</div>
+      <div class="mnemonic-detail">
+        <b>推</b>量・<b>意</b>志・<b>可</b>能・<b>当</b>然・<b>命</b>令・<b>適</b>当<br>
+        「<b>すいかとめた</b>」(スイカ止めた) で覚える！
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== REFERENCE ========== -->
+  <div id="reference" class="section">
+
+    <div class="ref-section">
+      <h2>動詞の活用表</h2>
+      <div class="ref-table-wrapper">
+        <table>
+          <tr>
+            <th>活用の種類</th><th>未然形</th><th>連用形</th><th>終止形</th><th>連体形</th><th>已然形</th><th>命令形</th><th>例語</th>
+          </tr>
+          <tr><td>四段活用</td><td>a</td><td>i</td><td>u</td><td>u</td><td>e</td><td>e</td><td>書く</td></tr>
+          <tr><td>上一段活用</td><td>i</td><td>i</td><td>iる</td><td>iる</td><td>iれ</td><td>iよ</td><td>見る</td></tr>
+          <tr><td>上二段活用</td><td>i</td><td>i</td><td>u</td><td>uる</td><td>uれ</td><td>iよ</td><td>起く</td></tr>
+          <tr><td>下一段活用</td><td>e</td><td>e</td><td>eる</td><td>eる</td><td>eれ</td><td>eよ</td><td>蹴る</td></tr>
+          <tr><td>下二段活用</td><td>e</td><td>e</td><td>u</td><td>uる</td><td>uれ</td><td>eよ</td><td>受く</td></tr>
+          <tr><td>カ行変格</td><td>こ</td><td>き</td><td>く</td><td>くる</td><td>くれ</td><td>こよ</td><td>来(く)</td></tr>
+          <tr><td>サ行変格</td><td>せ</td><td>し</td><td>す</td><td>する</td><td>すれ</td><td>せよ</td><td>す</td></tr>
+          <tr><td>ナ行変格</td><td>な</td><td>に</td><td>ぬ</td><td>ぬる</td><td>ぬれ</td><td>ね</td><td>死ぬ</td></tr>
+          <tr><td>ラ行変格</td><td>ら</td><td>り</td><td>り</td><td>る</td><td>れ</td><td>れ</td><td>あり</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <h2>形容詞の活用表</h2>
+      <div class="ref-table-wrapper">
+        <table>
+          <tr>
+            <th>活用の種類</th><th>未然形</th><th>連用形</th><th>終止形</th><th>連体形</th><th>已然形</th><th>命令形</th>
+          </tr>
+          <tr><td>ク活用（本活用）</td><td>(く)</td><td>く</td><td>し</td><td>き</td><td>けれ</td><td>○</td></tr>
+          <tr><td>ク活用（補助活用）</td><td>から</td><td>かり</td><td>○</td><td>かる</td><td>○</td><td>かれ</td></tr>
+          <tr><td>シク活用（本活用）</td><td>(しく)</td><td>しく</td><td>し</td><td>しき</td><td>しけれ</td><td>○</td></tr>
+          <tr><td>シク活用（補助活用）</td><td>しから</td><td>しかり</td><td>○</td><td>しかる</td><td>○</td><td>しかれ</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <h2>形容動詞の活用表</h2>
+      <div class="ref-table-wrapper">
+        <table>
+          <tr>
+            <th>活用の種類</th><th>未然形</th><th>連用形</th><th>終止形</th><th>連体形</th><th>已然形</th><th>命令形</th>
+          </tr>
+          <tr><td>ナリ活用</td><td>なら</td><td>なり・に</td><td>なり</td><td>なる</td><td>なれ</td><td>なれ</td></tr>
+          <tr><td>タリ活用</td><td>たら</td><td>たり・と</td><td>たり</td><td>たる</td><td>たれ</td><td>たれ</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <h2>助動詞の活用表</h2>
+      <div class="ref-table-wrapper">
+        <table>
+          <tr>
+            <th>助動詞</th><th>接続</th><th>意味</th><th>未然形</th><th>連用形</th><th>終止形</th><th>連体形</th><th>已然形</th><th>命令形</th><th>活用型</th>
+          </tr>
+          <tr><td>る</td><td>未然形</td><td>受身・尊敬・自発・可能</td><td>れ</td><td>れ</td><td>る</td><td>るる</td><td>るれ</td><td>れよ</td><td>下二段型</td></tr>
+          <tr><td>らる</td><td>未然形</td><td>受身・尊敬・自発・可能</td><td>られ</td><td>られ</td><td>らる</td><td>らるる</td><td>らるれ</td><td>られよ</td><td>下二段型</td></tr>
+          <tr><td>す</td><td>未然形</td><td>使役</td><td>せ</td><td>せ</td><td>す</td><td>する</td><td>すれ</td><td>せよ</td><td>下二段型</td></tr>
+          <tr><td>さす</td><td>未然形</td><td>使役</td><td>させ</td><td>させ</td><td>さす</td><td>さする</td><td>さすれ</td><td>させよ</td><td>下二段型</td></tr>
+          <tr><td>しむ</td><td>未然形</td><td>使役・尊敬</td><td>しめ</td><td>しめ</td><td>しむ</td><td>しむる</td><td>しむれ</td><td>しめよ</td><td>下二段型</td></tr>
+          <tr><td>ず</td><td>未然形</td><td>打消</td><td>ず</td><td>ず</td><td>ず</td><td>ぬ・ざる</td><td>ね・ざれ</td><td>○</td><td>特殊型</td></tr>
+          <tr><td>き</td><td>連用形</td><td>過去</td><td>○(せ)</td><td>○</td><td>き</td><td>し</td><td>しか</td><td>○</td><td>特殊型</td></tr>
+          <tr><td>けり</td><td>連用形</td><td>過去・詠嘆</td><td>けら</td><td>○</td><td>けり</td><td>ける</td><td>けれ</td><td>○</td><td>ラ変型</td></tr>
+          <tr><td>つ</td><td>連用形</td><td>完了・強意</td><td>て</td><td>て</td><td>つ</td><td>つる</td><td>つれ</td><td>てよ</td><td>下二段型</td></tr>
+          <tr><td>ぬ</td><td>連用形</td><td>完了・強意</td><td>な</td><td>に</td><td>ぬ</td><td>ぬる</td><td>ぬれ</td><td>ね</td><td>ナ変型</td></tr>
+          <tr><td>たり(完了)</td><td>連用形</td><td>完了・存続</td><td>たら</td><td>たり</td><td>たり</td><td>たる</td><td>たれ</td><td>たれ</td><td>ラ変型</td></tr>
+          <tr><td>り</td><td>サ変未然・四段已然</td><td>完了・存続</td><td>ら</td><td>り</td><td>り</td><td>る</td><td>れ</td><td>れ</td><td>ラ変型</td></tr>
+          <tr><td>む</td><td>未然形</td><td>推量・意志・勧誘・仮定・婉曲</td><td>○</td><td>○</td><td>む</td><td>む</td><td>め</td><td>○</td><td>四段型</td></tr>
+          <tr><td>むず</td><td>未然形</td><td>推量・意志</td><td>○</td><td>○</td><td>むず</td><td>むずる</td><td>むずれ</td><td>○</td><td>サ変型</td></tr>
+          <tr><td>けむ</td><td>連用形</td><td>過去推量・過去の原因推量</td><td>○</td><td>○</td><td>けむ</td><td>けむ</td><td>けめ</td><td>○</td><td>四段型</td></tr>
+          <tr><td>らむ</td><td>終止形</td><td>現在推量・原因推量</td><td>○</td><td>○</td><td>らむ</td><td>らむ</td><td>らめ</td><td>○</td><td>四段型</td></tr>
+          <tr><td>べし</td><td>終止形</td><td>推量・意志・可能・当然・命令・適当</td><td>(べく)</td><td>べく・べかり</td><td>べし</td><td>べき・べかる</td><td>べけれ</td><td>○</td><td>ク活用型</td></tr>
+          <tr><td>まじ</td><td>終止形</td><td>打消推量・打消意志・不適当・禁止</td><td>まじく</td><td>まじく・まじかり</td><td>まじ</td><td>まじき・まじかる</td><td>まじけれ</td><td>○</td><td>ク活用型</td></tr>
+          <tr><td>じ</td><td>未然形</td><td>打消推量・打消意志</td><td>○</td><td>○</td><td>じ</td><td>じ</td><td>○</td><td>○</td><td>特殊型</td></tr>
+          <tr><td>らし</td><td>終止形</td><td>推定</td><td>○</td><td>○</td><td>らし</td><td>らし</td><td>らし</td><td>○</td><td>無変化型</td></tr>
+          <tr><td>めり</td><td>終止形</td><td>推定・婉曲</td><td>○</td><td>めり</td><td>めり</td><td>める</td><td>めれ</td><td>○</td><td>ラ変型</td></tr>
+          <tr><td>なり(伝聞推定)</td><td>終止形</td><td>伝聞・推定</td><td>○</td><td>なり</td><td>なり</td><td>なる</td><td>なれ</td><td>○</td><td>ラ変型</td></tr>
+          <tr><td>まし</td><td>未然形</td><td>反実仮想・ためらいの意志・推量</td><td>ませ・ましか</td><td>○</td><td>まし</td><td>まし</td><td>ましか</td><td>○</td><td>特殊型</td></tr>
+          <tr><td>まほし</td><td>未然形</td><td>願望</td><td>まほしく</td><td>まほしく・まほしかり</td><td>まほし</td><td>まほしき・まほしかる</td><td>まほしけれ</td><td>○</td><td>ク活用型</td></tr>
+          <tr><td>たし</td><td>連用形</td><td>願望</td><td>たく</td><td>たく・たかり</td><td>たし</td><td>たき・たかる</td><td>たけれ</td><td>○</td><td>ク活用型</td></tr>
+          <tr><td>なり(断定)</td><td>連体形</td><td>断定・所在</td><td>なら</td><td>なり・に</td><td>なり</td><td>なる</td><td>なれ</td><td>なれ</td><td>ナリ活用型</td></tr>
+          <tr><td>たり(断定)</td><td>連体形</td><td>断定</td><td>たら</td><td>たり・と</td><td>たり</td><td>たる</td><td>たれ</td><td>たれ</td><td>タリ活用型</td></tr>
+          <tr><td>ごとし</td><td>連体形</td><td>比況</td><td>ごとく</td><td>ごとく</td><td>ごとし</td><td>ごとき</td><td>○</td><td>○</td><td>ク活用型</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const DATA = {
+  doushi: [
+    {type:"四段活用", row:["a","i","u","u","e","e"], example:"書く", mizen:"か", renyou:"き", shushi:"く", rentai:"く", izen:"け", meirei:"け"},
+    {type:"上一段活用", row:["i","i","iる","iる","iれ","iよ"], example:"見る", mizen:"み", renyou:"み", shushi:"みる", rentai:"みる", izen:"みれ", meirei:"みよ"},
+    {type:"上二段活用", row:["i","i","u","uる","uれ","iよ"], example:"起く", mizen:"き", renyou:"き", shushi:"く", rentai:"くる", izen:"くれ", meirei:"きよ"},
+    {type:"下一段活用", row:["e","e","eる","eる","eれ","eよ"], example:"蹴る", mizen:"け", renyou:"け", shushi:"ける", rentai:"ける", izen:"けれ", meirei:"けよ"},
+    {type:"下二段活用", row:["e","e","u","uる","uれ","eよ"], example:"受く", mizen:"け", renyou:"け", shushi:"く", rentai:"くる", izen:"くれ", meirei:"けよ"},
+    {type:"カ行変格活用", row:["こ","き","く","くる","くれ","こよ"], example:"来(く)"},
+    {type:"サ行変格活用", row:["せ","し","す","する","すれ","せよ"], example:"す"},
+    {type:"ナ行変格活用", row:["な","に","ぬ","ぬる","ぬれ","ね"], example:"死ぬ"},
+    {type:"ラ行変格活用", row:["ら","り","り","る","れ","れ"], example:"あり"},
+  ],
+  keiyoushi: [
+    {type:"ク活用（本活用）", row:["(く)","く","し","き","けれ","○"]},
+    {type:"ク活用（補助活用）", row:["から","かり","○","かる","○","かれ"]},
+    {type:"シク活用（本活用）", row:["(しく)","しく","し","しき","しけれ","○"]},
+    {type:"シク活用（補助活用）", row:["しから","しかり","○","しかる","○","しかれ"]},
+  ],
+  keiyoudoushi: [
+    {type:"ナリ活用", row:["なら","なり・に","なり","なる","なれ","なれ"]},
+    {type:"タリ活用", row:["たら","たり・と","たり","たる","たれ","たれ"]},
+  ],
+  jodoushi: [
+    {name:"る", row:["れ","れ","る","るる","るれ","れよ"], katsuyo:"下二段型"},
+    {name:"らる", row:["られ","られ","らる","らるる","らるれ","られよ"], katsuyo:"下二段型"},
+    {name:"す", row:["せ","せ","す","する","すれ","せよ"], katsuyo:"下二段型"},
+    {name:"さす", row:["させ","させ","さす","さする","さすれ","させよ"], katsuyo:"下二段型"},
+    {name:"しむ", row:["しめ","しめ","しむ","しむる","しむれ","しめよ"], katsuyo:"下二段型"},
+    {name:"ず", row:["ず","ず","ず","ぬ・ざる","ね・ざれ","○"], katsuyo:"特殊型"},
+    {name:"き", row:["○(せ)","○","き","し","しか","○"], katsuyo:"特殊型"},
+    {name:"けり", row:["けら","○","けり","ける","けれ","○"], katsuyo:"ラ変型"},
+    {name:"つ", row:["て","て","つ","つる","つれ","てよ"], katsuyo:"下二段型"},
+    {name:"ぬ", row:["な","に","ぬ","ぬる","ぬれ","ね"], katsuyo:"ナ変型"},
+    {name:"たり(完了)", row:["たら","たり","たり","たる","たれ","たれ"], katsuyo:"ラ変型"},
+    {name:"り", row:["ら","り","り","る","れ","れ"], katsuyo:"ラ変型"},
+    {name:"む", row:["○","○","む","む","め","○"], katsuyo:"四段型"},
+    {name:"むず", row:["○","○","むず","むずる","むずれ","○"], katsuyo:"サ変型"},
+    {name:"けむ", row:["○","○","けむ","けむ","けめ","○"], katsuyo:"四段型"},
+    {name:"らむ", row:["○","○","らむ","らむ","らめ","○"], katsuyo:"四段型"},
+    {name:"べし", row:["(べく)","べく・べかり","べし","べき・べかる","べけれ","○"], katsuyo:"ク活用型"},
+    {name:"まじ", row:["まじく","まじく・まじかり","まじ","まじき・まじかる","まじけれ","○"], katsuyo:"ク活用型"},
+    {name:"じ", row:["○","○","じ","じ","○","○"], katsuyo:"特殊型"},
+    {name:"らし", row:["○","○","らし","らし","らし","○"], katsuyo:"無変化型"},
+    {name:"めり", row:["○","めり","めり","める","めれ","○"], katsuyo:"ラ変型"},
+    {name:"なり(伝聞推定)", row:["○","なり","なり","なる","なれ","○"], katsuyo:"ラ変型"},
+    {name:"まし", row:["ませ・ましか","○","まし","まし","ましか","○"], katsuyo:"特殊型"},
+    {name:"まほし", row:["まほしく","まほしく・まほしかり","まほし","まほしき・まほしかる","まほしけれ","○"], katsuyo:"ク活用型"},
+    {name:"たし", row:["たく","たく・たかり","たし","たき・たかる","たけれ","○"], katsuyo:"ク活用型"},
+    {name:"なり(断定)", row:["なら","なり・に","なり","なる","なれ","なれ"], katsuyo:"ナリ活用型"},
+    {name:"たり(断定)", row:["たら","たり・と","たり","たる","たれ","たれ"], katsuyo:"タリ活用型"},
+    {name:"ごとし", row:["ごとく","ごとく","ごとし","ごとき","○","○"], katsuyo:"ク活用型"},
+  ]
+};
+
+const SETSUZOKU = {
+  "る":"未然形", "らる":"未然形", "す":"未然形", "さす":"未然形", "しむ":"未然形",
+  "ず":"未然形", "む":"未然形", "むず":"未然形", "じ":"未然形", "まし":"未然形", "まほし":"未然形",
+  "き":"連用形", "けり":"連用形", "つ":"連用形", "ぬ":"連用形", "たり(完了)":"連用形", "たし":"連用形", "けむ":"連用形",
+  "べし":"終止形", "まじ":"終止形", "らし":"終止形", "めり":"終止形", "なり(伝聞推定)":"終止形", "らむ":"終止形",
+  "なり(断定)":"連体形", "たり(断定)":"連体形", "ごとし":"連体形",
+  "り":"サ変未然形・四段已然形"
+};
+
+const IMI = {
+  "る":"受身・尊敬・自発・可能", "らる":"受身・尊敬・自発・可能",
+  "す":"使役", "さす":"使役", "しむ":"使役・尊敬",
+  "ず":"打消",
+  "き":"過去", "けり":"過去・詠嘆",
+  "つ":"完了・強意", "ぬ":"完了・強意",
+  "たり(完了)":"完了・存続", "り":"完了・存続",
+  "む":"推量・意志・勧誘・仮定・婉曲", "むず":"推量・意志",
+  "けむ":"過去推量・過去の原因推量", "らむ":"現在推量・原因推量",
+  "べし":"推量・意志・可能・当然・命令・適当",
+  "まじ":"打消推量・打消意志・不適当・禁止",
+  "じ":"打消推量・打消意志",
+  "らし":"推定", "めり":"推定・婉曲", "なり(伝聞推定)":"伝聞・推定",
+  "まし":"反実仮想・ためらいの意志・推量",
+  "まほし":"願望", "たし":"願望",
+  "なり(断定)":"断定・所在", "たり(断定)":"断定",
+  "ごとし":"比況"
+};
+
+const FORMS = ["未然形","連用形","終止形","連体形","已然形","命令形"];
+
+// ===== FLASHCARD =====
+let fcCards = [];
+let fcIndex = 0;
+
+function buildFlashcards(category) {
+  const cards = [];
+  if (category === "doushi") {
+    DATA.doushi.forEach(v => {
+      FORMS.forEach((f, i) => {
+        cards.push({label: `動詞 - ${v.type}`, question: `「${v.example}」の${f}は？`, answer: v.row[i], hint: v.type});
+      });
+    });
+  } else if (category === "keiyoushi") {
+    DATA.keiyoushi.forEach(v => {
+      FORMS.forEach((f, i) => {
+        cards.push({label: `形容詞 - ${v.type}`, question: `${v.type}の${f}は？`, answer: v.row[i], hint: ""});
+      });
+    });
+  } else if (category === "keiyoudoushi") {
+    DATA.keiyoudoushi.forEach(v => {
+      FORMS.forEach((f, i) => {
+        cards.push({label: `形容動詞 - ${v.type}`, question: `${v.type}の${f}は？`, answer: v.row[i], hint: ""});
+      });
+    });
+  } else if (category === "jodoushi") {
+    DATA.jodoushi.forEach(v => {
+      FORMS.forEach((f, i) => {
+        cards.push({label: `助動詞「${v.name}」`, question: `「${v.name}」の${f}は？`, answer: v.row[i], hint: `${v.katsuyo}`});
+      });
+    });
+  } else if (category === "jodoushi-setsuzoku") {
+    Object.keys(SETSUZOKU).forEach(k => {
+      cards.push({label: "助動詞の接続", question: `「${k}」は何形に接続する？`, answer: SETSUZOKU[k], hint: ""});
+    });
+  } else if (category === "jodoushi-imi") {
+    Object.keys(IMI).forEach(k => {
+      cards.push({label: "助動詞の意味", question: `「${k}」の意味は？`, answer: IMI[k], hint: ""});
+    });
+  }
+  return cards;
+}
+
+function initFlashcards() {
+  const cat = document.getElementById("fc-category").value;
+  fcCards = buildFlashcards(cat);
+  fcIndex = 0;
+  renderCard();
+}
+
+function shuffleCards() {
+  for (let i = fcCards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fcCards[i], fcCards[j]] = [fcCards[j], fcCards[i]];
+  }
+  fcIndex = 0;
+  renderCard();
+}
+
+function renderCard() {
+  if (!fcCards.length) return;
+  const c = fcCards[fcIndex];
+  document.getElementById("fc-label").textContent = c.label;
+  document.getElementById("fc-question").textContent = c.question;
+  document.getElementById("fc-hint").textContent = c.hint;
+  document.getElementById("fc-answer").textContent = c.answer;
+  document.getElementById("flashcard-main").classList.remove("revealed");
+  document.getElementById("fc-counter").textContent = `${fcIndex + 1} / ${fcCards.length}`;
+  document.getElementById("fc-progress").style.width = `${((fcIndex + 1) / fcCards.length) * 100}%`;
+}
+
+function toggleReveal() {
+  document.getElementById("flashcard-main").classList.toggle("revealed");
+}
+
+function nextCard() {
+  if (fcIndex < fcCards.length - 1) { fcIndex++; renderCard(); }
+}
+
+function prevCard() {
+  if (fcIndex > 0) { fcIndex--; renderCard(); }
+}
+
+// ===== QUIZ =====
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizMistakes = [];
+
+function buildQuizPool(categories) {
+  const pool = [];
+  categories.forEach(cat => {
+    const cards = buildFlashcards(cat);
+    cards.forEach(c => {
+      if (c.answer !== "○") {
+        pool.push({...c, category: cat});
+      }
+    });
+  });
+  return pool;
+}
+
+function startQuiz() {
+  const checkboxes = document.querySelectorAll("#quiz-setup input[type=checkbox]:checked");
+  const cats = Array.from(checkboxes).map(cb => cb.value);
+  if (!cats.length) { alert("出題範囲を1つ以上選んでください"); return; }
+
+  let pool = buildQuizPool(cats);
+  // shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  const count = parseInt(document.getElementById("quiz-count").value);
+  quizQuestions = pool.slice(0, Math.min(count, pool.length));
+  quizIndex = 0;
+  quizScore = 0;
+  quizMistakes = [];
+
+  document.getElementById("quiz-setup").style.display = "none";
+  document.getElementById("quiz-area").style.display = "block";
+  document.getElementById("quiz-result").style.display = "none";
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (quizIndex >= quizQuestions.length) { showResult(); return; }
+  const q = quizQuestions[quizIndex];
+
+  document.getElementById("q-label").textContent = `第${quizIndex + 1}問 / ${quizQuestions.length}問`;
+  document.getElementById("q-text").textContent = q.question;
+  document.getElementById("q-sub").textContent = q.label;
+  document.getElementById("quiz-progress").style.width = `${((quizIndex) / quizQuestions.length) * 100}%`;
+
+  // Generate choices
+  const correct = q.answer;
+  let allAnswers = new Set();
+  allAnswers.add(correct);
+
+  // get distractors from same category
+  const sameCat = buildFlashcards(q.category).map(c => c.answer).filter(a => a !== "○" && a !== correct);
+  const shuffled = sameCat.sort(() => Math.random() - 0.5);
+  for (const a of shuffled) {
+    if (allAnswers.size >= 4) break;
+    allAnswers.add(a);
+  }
+  // fill if needed
+  if (allAnswers.size < 4) {
+    const extras = ["○","あ","い","う","え","お","か","き","く","け","こ","さ","し","す","せ","そ"];
+    for (const e of extras) {
+      if (allAnswers.size >= 4) break;
+      if (!allAnswers.has(e)) allAnswers.add(e);
+    }
+  }
+
+  let choices = Array.from(allAnswers).sort(() => Math.random() - 0.5);
+  const choicesDiv = document.getElementById("q-choices");
+  choicesDiv.innerHTML = "";
+  choices.forEach(ch => {
+    const btn = document.createElement("button");
+    btn.textContent = ch;
+    btn.onclick = () => answerQuiz(btn, ch, correct);
+    choicesDiv.appendChild(btn);
+  });
+
+  document.getElementById("q-feedback").className = "quiz-feedback";
+  document.getElementById("q-feedback").textContent = "";
+  document.getElementById("q-next").className = "quiz-next";
+}
+
+function answerQuiz(btn, selected, correct) {
+  const buttons = document.querySelectorAll("#q-choices button");
+  buttons.forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add("correct");
+  });
+
+  const fb = document.getElementById("q-feedback");
+  if (selected === correct) {
+    quizScore++;
+    fb.textContent = "正解！";
+    fb.className = "quiz-feedback show correct-fb";
+  } else {
+    btn.classList.add("wrong");
+    fb.textContent = `不正解… 正解は「${correct}」`;
+    fb.className = "quiz-feedback show wrong-fb";
+    quizMistakes.push({question: quizQuestions[quizIndex].question, label: quizQuestions[quizIndex].label, correct, selected});
+  }
+
+  document.getElementById("q-next").className = "quiz-next show";
+}
+
+function nextQuizQuestion() {
+  quizIndex++;
+  renderQuiz();
+}
+
+function showResult() {
+  document.getElementById("quiz-area").style.display = "none";
+  const pct = Math.round((quizScore / quizQuestions.length) * 100);
+  let grade = pct >= 90 ? "素晴らしい！" : pct >= 70 ? "よくできました！" : pct >= 50 ? "もう少し！" : "復習しよう！";
+  let emoji = pct >= 90 ? "&#127775;" : pct >= 70 ? "&#128079;" : pct >= 50 ? "&#128170;" : "&#128214;";
+
+  let html = `<h2>${emoji} ${grade}</h2>
+    <div class="result-score">${quizScore}<span class="total"> / ${quizQuestions.length}</span></div>
+    <div class="result-detail">正答率: ${pct}%</div>`;
+
+  if (quizMistakes.length > 0) {
+    html += `<div class="mistakes-list"><h3>間違えた問題:</h3>`;
+    quizMistakes.forEach(m => {
+      html += `<div class="mistake-item">${m.label}：${m.question}<br>あなたの答え: ${m.selected} → <span class="correct-ans">正解: ${m.correct}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<br><button class="btn-start" onclick="resetQuiz()">もう一度</button>`;
+  const res = document.getElementById("quiz-result");
+  res.innerHTML = html;
+  res.style.display = "block";
+}
+
+function resetQuiz() {
+  document.getElementById("quiz-setup").style.display = "block";
+  document.getElementById("quiz-result").style.display = "none";
+}
+
+// ===== NAV =====
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+}
+
+// ===== KEYBOARD =====
+document.addEventListener("keydown", e => {
+  if (document.getElementById("flashcard").classList.contains("active")) {
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); nextCard(); }
+    if (e.key === "ArrowLeft") prevCard();
+    if (e.key === "Enter") toggleReveal();
+  }
+});
+
+// ===== INIT =====
+initFlashcards();
+</script>
+
+</body>
+</html>

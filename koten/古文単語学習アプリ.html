@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>古文単語マスター</title>
+<style>
+:root {
+  --primary: #6b3a2a;
+  --primary-light: #8b5e3c;
+  --accent: #c0392b;
+  --bg: #faf6f0;
+  --card-bg: #ffffff;
+  --text: #2c2c2c;
+  --text-light: #777;
+  --border: #e0d5c8;
+  --correct: #27ae60;
+  --wrong: #e74c3c;
+  --gold: #d4a017;
+  --star3: #e74c3c;
+  --star2: #e67e22;
+  --star1: #3498db;
+  --known: #27ae60;
+  --learning: #f39c12;
+  --unknown: #95a5a6;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  background: linear-gradient(135deg, #4a2518, #8b5e3c);
+  color: white;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
+header h1 { font-size: 1.6em; margin-bottom: 4px; }
+header p { font-size: 0.85em; opacity: 0.9; }
+
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  flex-wrap: wrap;
+  background: white;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav button {
+  padding: 8px 18px;
+  border: 2px solid var(--primary);
+  background: white;
+  color: var(--primary);
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.nav button:hover, .nav button.active {
+  background: var(--primary);
+  color: white;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.section { display: none; }
+.section.active { display: block; }
+
+/* ===== Dashboard ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.stat-card .num { font-size: 2em; font-weight: 700; }
+.stat-card .label { font-size: 0.8em; color: var(--text-light); margin-top: 4px; }
+.stat-card.known .num { color: var(--known); }
+.stat-card.learning .num { color: var(--learning); }
+.stat-card.unknown .num { color: var(--unknown); }
+.stat-card.total .num { color: var(--primary); }
+
+.progress-bar-main {
+  background: #e0d5c8;
+  border-radius: 10px;
+  height: 24px;
+  margin: 16px 0;
+  overflow: hidden;
+  display: flex;
+}
+
+.progress-bar-main .seg-known { background: var(--known); height: 100%; transition: width 0.3s; }
+.progress-bar-main .seg-learning { background: var(--learning); height: 100%; transition: width 0.3s; }
+
+.chapter-list { margin: 16px 0; }
+
+.chapter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: white;
+  border-radius: 10px;
+  margin: 6px 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chapter-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.chapter-row .ch-name { font-weight: 600; min-width: 80px; font-size: 0.9em; }
+.chapter-row .bar-bg { flex: 1; background: #e8e0d5; border-radius: 6px; height: 16px; overflow: hidden; display: flex; }
+.chapter-row .bar-bg div { height: 100%; transition: width 0.3s; }
+.chapter-row .pct { font-size: 0.85em; min-width: 50px; text-align: right; font-weight: 600; }
+
+.reset-btn {
+  display: block;
+  margin: 20px auto;
+  padding: 8px 20px;
+  background: #eee;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85em;
+  color: #888;
+}
+
+.reset-btn:hover { background: #fdd; color: var(--wrong); border-color: var(--wrong); }
+
+/* ===== Filter Bar ===== */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.filter-bar select, .filter-bar button {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85em;
+  background: white;
+  cursor: pointer;
+}
+
+.filter-bar button:hover { background: #f5efe5; }
+
+/* ===== Progress bar ===== */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e8e0d5;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.progress-bar .fill {
+  height: 100%;
+  background: var(--primary-light);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+/* ===== Flashcard ===== */
+.flashcard {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 36px 28px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  cursor: pointer;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.15s;
+  user-select: none;
+  position: relative;
+}
+
+.flashcard:hover { transform: translateY(-2px); }
+
+.flashcard .badge {
+  display: inline-flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.flashcard .badge span {
+  font-size: 0.75em;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #f0ebe0;
+  color: var(--text-light);
+}
+
+.flashcard .badge .star { background: transparent; padding: 0; font-size: 0.9em; }
+.flashcard .badge .star.s3 { color: var(--star3); }
+.flashcard .badge .star.s2 { color: var(--star2); }
+.flashcard .badge .star.s1 { color: var(--star1); }
+
+.flashcard .word {
+  font-size: 2.4em;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.flashcard .pos {
+  font-size: 0.85em;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+
+.flashcard .answer-area {
+  margin-top: 16px;
+  max-width: 90%;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.flashcard.revealed .answer-area { opacity: 1; }
+
+.flashcard .meaning {
+  font-size: 1.5em;
+  color: var(--accent);
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.flashcard .memo {
+  font-size: 0.88em;
+  color: var(--text-light);
+  line-height: 1.6;
+  background: #faf5ed;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border-left: 3px solid var(--gold);
+}
+
+.flashcard .tap-hint {
+  position: absolute;
+  bottom: 14px;
+  font-size: 0.72em;
+  color: #ccc;
+}
+
+.card-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.card-nav button {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95em;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn-prev { background: #eee; color: var(--text); }
+.btn-next { background: var(--primary); color: white; }
+.btn-prev:hover { background: #ddd; }
+.btn-next:hover { background: var(--primary-light); }
+
+.btn-status {
+  padding: 8px 16px !important;
+  font-size: 0.8em !important;
+}
+
+.btn-status.known { background: var(--known); color: white; }
+.btn-status.learning { background: var(--learning); color: white; }
+.btn-status.unknown { background: #ddd; color: #888; }
+
+.card-counter {
+  text-align: center;
+  margin-top: 10px;
+  color: var(--text-light);
+  font-size: 0.85em;
+}
+
+/* ===== Quiz ===== */
+.quiz-setup {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.quiz-setup h2 { margin-bottom: 16px; color: var(--primary); }
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+  margin: 0 auto 20px;
+}
+
+.quiz-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #faf5ed;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.quiz-options input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.quiz-mode-select {
+  margin: 16px auto;
+  max-width: 400px;
+}
+
+.quiz-mode-select label {
+  font-weight: 600;
+  font-size: 0.85em;
+}
+
+.quiz-mode-select select {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9em;
+  margin-left: 8px;
+}
+
+.btn-start {
+  padding: 14px 48px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-start:hover { background: #a93226; }
+
+.quiz-area { display: none; }
+
+.quiz-question {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.quiz-question .q-label {
+  font-size: 0.8em;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+
+.quiz-question .q-text {
+  font-size: 1.8em;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.quiz-question .q-sub {
+  color: var(--text-light);
+  font-size: 0.88em;
+}
+
+.quiz-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.quiz-choices button {
+  padding: 16px 12px;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+
+.quiz-choices button:hover { border-color: var(--primary); background: #faf5ed; }
+.quiz-choices button.correct { border-color: var(--correct); background: #e8f8e8; color: var(--correct); font-weight: bold; }
+.quiz-choices button.wrong { border-color: var(--wrong); background: #fde8e8; color: var(--wrong); }
+.quiz-choices button:disabled { cursor: default; }
+
+.quiz-feedback {
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  display: none;
+}
+
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correct-fb { background: #e8f8e8; color: var(--correct); }
+.quiz-feedback.wrong-fb { background: #fde8e8; color: var(--wrong); }
+
+.quiz-feedback .fb-memo {
+  font-weight: normal;
+  font-size: 0.85em;
+  margin-top: 6px;
+  color: var(--text-light);
+}
+
+.quiz-next {
+  display: none;
+  margin: 0 auto;
+  padding: 12px 36px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1em;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.quiz-next.show { display: block; }
+
+/* ===== Result ===== */
+.result-card {
+  background: white;
+  border-radius: 16px;
+  padding: 36px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.result-card h2 { font-size: 1.6em; margin-bottom: 8px; }
+
+.result-score {
+  font-size: 3em;
+  font-weight: bold;
+  color: var(--primary);
+  margin: 12px 0;
+}
+
+.result-score .total { font-size: 0.5em; color: var(--text-light); }
+
+.result-detail {
+  margin: 16px 0;
+  font-size: 0.9em;
+  color: var(--text-light);
+}
+
+.mistakes-list {
+  text-align: left;
+  max-width: 500px;
+  margin: 16px auto;
+}
+
+.mistakes-list h3 {
+  color: var(--wrong);
+  margin-bottom: 10px;
+  font-size: 1em;
+}
+
+.mistake-item {
+  background: #fff5f5;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 0.88em;
+  border-left: 3px solid var(--wrong);
+  line-height: 1.5;
+}
+
+.mistake-item .correct-ans { color: var(--correct); font-weight: bold; }
+
+/* ===== Reference Table ===== */
+.search-box {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.search-box input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95em;
+  background: white;
+}
+
+.search-box select {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.85em;
+  background: white;
+}
+
+.word-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  font-size: 0.85em;
+}
+
+th {
+  background: var(--primary);
+  color: white;
+  padding: 10px 8px;
+  font-weight: bold;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  cursor: pointer;
+}
+
+th:hover { background: var(--primary-light); }
+
+td {
+  padding: 8px 10px;
+  border: 1px solid #f0ebe0;
+}
+
+tr:nth-child(even) td { background: #faf8f2; }
+tr:hover td { background: #f5efe5; }
+
+.star-cell { text-align: center; white-space: nowrap; }
+.star-cell.s3 { color: var(--star3); font-weight: bold; }
+.star-cell.s2 { color: var(--star2); }
+.star-cell.s1 { color: var(--star1); }
+
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.status-dot.known { background: var(--known); }
+.status-dot.learning { background: var(--learning); }
+.status-dot.unknown { background: #ddd; }
+
+.table-count {
+  text-align: right;
+  font-size: 0.8em;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+
+@media (max-width: 600px) {
+  .quiz-choices { grid-template-columns: 1fr; }
+  .flashcard .word { font-size: 1.8em; }
+  .container { padding: 10px; }
+  .card-nav { gap: 6px; }
+  .card-nav button { padding: 8px 16px; font-size: 0.85em; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>古文単語マスター</h1>
+  <p>全147語 &#x2500; フラッシュカード・四択クイズ・一覧表</p>
+</header>
+
+<div class="nav">
+  <button class="active" onclick="showSection('dashboard')">ダッシュボード</button>
+  <button onclick="showSection('flashcard')">フラッシュカード</button>
+  <button onclick="showSection('quiz')">四択クイズ</button>
+  <button onclick="showSection('reference')">単語一覧</button>
+</div>
+
+<div class="container">
+
+  <!-- ===== DASHBOARD ===== -->
+  <div id="dashboard" class="section active">
+    <div class="stats-grid">
+      <div class="stat-card total"><div class="num" id="d-total">0</div><div class="label">全単語数</div></div>
+      <div class="stat-card known"><div class="num" id="d-known">0</div><div class="label">覚えた</div></div>
+      <div class="stat-card learning"><div class="num" id="d-learning">0</div><div class="label">学習中</div></div>
+      <div class="stat-card unknown"><div class="num" id="d-unknown">0</div><div class="label">未学習</div></div>
+    </div>
+    <div class="progress-bar-main">
+      <div class="seg-known" id="d-bar-known"></div>
+      <div class="seg-learning" id="d-bar-learning"></div>
+    </div>
+    <h3 style="margin:16px 0 8px;color:var(--primary);font-size:1em;">章ごとの進捗</h3>
+    <div class="chapter-list" id="chapter-list"></div>
+    <button class="reset-btn" onclick="if(confirm('学習データをリセットしますか？'))resetProgress()">学習データをリセット</button>
+  </div>
+
+  <!-- ===== FLASHCARD ===== -->
+  <div id="flashcard" class="section">
+    <div class="filter-bar">
+      <select id="fc-chapter" onchange="initFlashcards()">
+        <option value="all">全章</option>
+        <option value="第1章">第1章</option>
+        <option value="第2章">第2章</option>
+        <option value="第3章">第3章</option>
+      </select>
+      <select id="fc-star" onchange="initFlashcards()">
+        <option value="all">全重要度</option>
+        <option value="★★★">★★★のみ</option>
+        <option value="★★">★★以上</option>
+      </select>
+      <select id="fc-status" onchange="initFlashcards()">
+        <option value="all">全ステータス</option>
+        <option value="unknown">未学習のみ</option>
+        <option value="learning">学習中のみ</option>
+        <option value="known">覚えたのみ</option>
+      </select>
+      <button onclick="shuffleFC()">シャッフル</button>
+    </div>
+    <div class="progress-bar"><div class="fill" id="fc-progress"></div></div>
+    <div class="flashcard" id="fc-main" onclick="toggleFC()">
+      <div class="badge">
+        <span id="fc-chapter-badge"></span>
+        <span class="star" id="fc-star-badge"></span>
+      </div>
+      <div class="word" id="fc-word"></div>
+      <div class="pos" id="fc-pos"></div>
+      <div class="answer-area">
+        <div class="meaning" id="fc-meaning"></div>
+        <div class="memo" id="fc-memo"></div>
+      </div>
+      <div class="tap-hint">タップで意味を表示</div>
+    </div>
+    <div class="card-nav">
+      <button class="btn-prev" onclick="prevFC()">&#9664; 前</button>
+      <button class="btn-status unknown" id="fc-btn-unknown" onclick="setStatus('unknown')">未学習</button>
+      <button class="btn-status learning" id="fc-btn-learning" onclick="setStatus('learning')">学習中</button>
+      <button class="btn-status known" id="fc-btn-known" onclick="setStatus('known')">覚えた</button>
+      <button class="btn-next" onclick="nextFC()">次 &#9654;</button>
+    </div>
+    <div class="card-counter" id="fc-counter"></div>
+  </div>
+
+  <!-- ===== QUIZ ===== -->
+  <div id="quiz" class="section">
+    <div class="quiz-setup" id="quiz-setup">
+      <h2>四択クイズ</h2>
+      <p style="margin-bottom:16px;color:#888;">出題範囲を選んでください</p>
+      <div class="quiz-options">
+        <label><input type="checkbox" value="第1章" checked> 第1章（55語）</label>
+        <label><input type="checkbox" value="第2章" checked> 第2章（39語）</label>
+        <label><input type="checkbox" value="第3章" checked> 第3章（53語）</label>
+      </div>
+      <div class="quiz-mode-select">
+        <label>出題モード:
+          <select id="quiz-mode">
+            <option value="word-to-meaning">古語 → 意味</option>
+            <option value="meaning-to-word">意味 → 古語</option>
+          </select>
+        </label>
+      </div>
+      <div class="quiz-mode-select">
+        <label>問題数:
+          <select id="quiz-count">
+            <option value="10">10問</option>
+            <option value="20" selected>20問</option>
+            <option value="30">30問</option>
+            <option value="50">50問</option>
+            <option value="999">全問</option>
+          </select>
+        </label>
+      </div>
+      <div class="quiz-mode-select" style="margin-bottom:20px;">
+        <label><input type="checkbox" id="quiz-star-only"> ★★★のみ</label>
+      </div>
+      <button class="btn-start" onclick="startQuiz()">スタート</button>
+    </div>
+    <div class="quiz-area" id="quiz-area">
+      <div class="progress-bar"><div class="fill" id="quiz-progress"></div></div>
+      <div class="quiz-question">
+        <div class="q-label" id="q-label"></div>
+        <div class="q-text" id="q-text"></div>
+        <div class="q-sub" id="q-sub"></div>
+      </div>
+      <div class="quiz-choices" id="q-choices"></div>
+      <div class="quiz-feedback" id="q-feedback"></div>
+      <button class="quiz-next" id="q-next" onclick="nextQuiz()">次の問題 &#9654;</button>
+    </div>
+    <div class="result-card" id="quiz-result" style="display:none;"></div>
+  </div>
+
+  <!-- ===== REFERENCE ===== -->
+  <div id="reference" class="section">
+    <div class="search-box">
+      <input type="text" id="ref-search" placeholder="古語・意味で検索..." oninput="filterTable()">
+      <select id="ref-chapter" onchange="filterTable()">
+        <option value="all">全章</option>
+        <option value="第1章">第1章</option>
+        <option value="第2章">第2章</option>
+        <option value="第3章">第3章</option>
+      </select>
+      <select id="ref-star" onchange="filterTable()">
+        <option value="all">全重要度</option>
+        <option value="★★★">★★★</option>
+        <option value="★★">★★</option>
+        <option value="★">★</option>
+      </select>
+    </div>
+    <div class="table-count" id="ref-count"></div>
+    <div class="word-table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">No.</th>
+            <th onclick="sortTable(1)">章</th>
+            <th onclick="sortTable(2)">古語</th>
+            <th onclick="sortTable(3)">品詞</th>
+            <th onclick="sortTable(4)">意味</th>
+            <th onclick="sortTable(5)">覚え方</th>
+            <th onclick="sortTable(6)">重要度</th>
+            <th>状態</th>
+          </tr>
+        </thead>
+        <tbody id="ref-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== WORD DATA =====
+const WORDS = [
+  // === 第1章 (No.1-55) ===
+  {no:1,ch:"第1章",word:"あく",pos:"動詞・カ行四段",core:"満足する",memo:"「飽きる」は紙一重。古文では「満足する」が中心",star:"★★★"},
+  {no:2,ch:"第1章",word:"おどろく",pos:"動詞・カ行四段",core:"目を覚ます・はっとする",memo:"古典では「びっくりする」の意味はまれ",star:"★★★"},
+  {no:3,ch:"第1章",word:"ながむ",pos:"動詞・マ行下二段",core:"物思いにふける・和歌を詠む",memo:"「眺める」ではなく内面的な行為",star:"★★★"},
+  {no:4,ch:"第1章",word:"ねんず",pos:"動詞・サ行変格",core:"我慢する・祈る",memo:"念じる→こらえる",star:"★★"},
+  {no:5,ch:"第1章",word:"わぶ",pos:"動詞・バ行上二段",core:"つらく思う・困る・わびしく暮らす",memo:"「詫びる」とは別語",star:"★★★"},
+  {no:6,ch:"第1章",word:"おこなふ",pos:"動詞・ハ行四段",core:"仏道修行をする",memo:"「行ふ」＝仏道の修行",star:"★★"},
+  {no:7,ch:"第1章",word:"とぶらふ",pos:"動詞・ハ行四段",core:"訪問する・弔問する",memo:"①「訪」の字→見舞う・訪問する。②「弔」は現代語に近い",star:"★"},
+  {no:8,ch:"第1章",word:"ののしる",pos:"動詞・ラ行四段",core:"大声を出す・大騒ぎする・評判になる",memo:"「罵倒する」とは大違い。大声で騒ぐのが中心",star:"★"},
+  {no:9,ch:"第1章",word:"おこす",pos:"動詞・サ行四段",core:"（手紙・贈り物を）よこす",memo:"「怒る」ではない",star:"★★"},
+  {no:10,ch:"第1章",word:"まもる",pos:"動詞・ラ行四段",core:"じっと見つめる",memo:"「目」＋「守る」→「見守る」が原義",star:"★"},
+  {no:11,ch:"第1章",word:"わづらふ",pos:"動詞・ハ行四段",core:"病気になる・思い悩む・困る",memo:"病気以外に精神的な苦しみも表す",star:"★"},
+  {no:12,ch:"第1章",word:"ながらふ",pos:"動詞・ハ行下二段",core:"生き長らえる・長い間〜し続ける",memo:"「ながら」+存続",star:"★★"},
+  {no:13,ch:"第1章",word:"ありつく",pos:"動詞・カ行四段",core:"落ち着く・身分相応になる",memo:"身分相応→落ちぶれる→落ち着く",star:"★★"},
+  {no:14,ch:"第1章",word:"はしたなし",pos:"形容詞・ク活用",core:"中途半端だ・きまりが悪い",memo:"「端」になる→中途半端→恥ずかしい",star:"★★★"},
+  {no:15,ch:"第1章",word:"かなし",pos:"形容詞・シク活用",core:"愛し＝かわいい／悲し＝気の毒だ",memo:"「愛し」と「悲（哀）し」の二系統",star:"★★★"},
+  {no:16,ch:"第1章",word:"いみじ",pos:"形容詞・シク活用",core:"程度がはなはだしい（すばらしい／ひどい）",memo:"「忌む」に関連。良い意味でも悪い意味でも使う",star:"★★★"},
+  {no:17,ch:"第1章",word:"ゆゆし",pos:"形容詞・シク活用",core:"不吉だ・恐ろしいほど〜だ・すばらしい",memo:"「忌々しい」と同根",star:"★★★"},
+  {no:18,ch:"第1章",word:"めでたし",pos:"形容詞・ク活用",core:"すばらしい",memo:"very good / excellent。現代語の「おめでたい」とは違う",star:"★★★"},
+  {no:19,ch:"第1章",word:"なまめかし",pos:"形容詞・シク活用",core:"優雅だ・上品で美しい",memo:"「なま」＝若々しく美しい → 優雅",star:"★★"},
+  {no:20,ch:"第1章",word:"ありがたし",pos:"形容詞・ク活用",core:"めったにない",memo:"「有ること」が「難し」→ めったにない",star:"★★★"},
+  {no:21,ch:"第1章",word:"おほけなし",pos:"形容詞・ク活用",core:"身の程知らずだ・恐れ多い",memo:"分不相応なことをする",star:"★★"},
+  {no:22,ch:"第1章",word:"すなほなり",pos:"形容動詞・ナリ活用",core:"まっすぐだ・あるべき姿だ",memo:"現代語「素直」とはニュアンスが違う",star:"★★"},
+  {no:23,ch:"第1章",word:"あらまほし",pos:"形容詞・シク活用",core:"理想的だ・あってほしい",memo:"「あり」＋「まほし」（願望）",star:"★★"},
+  {no:24,ch:"第1章",word:"なさけなし",pos:"形容詞・ク活用",core:"風情を解さない・思いやりがない",memo:"現代語「情けない」とは意味が違う",star:"★★★"},
+  {no:25,ch:"第1章",word:"なほざりなり",pos:"形容動詞・ナリ活用",core:"おろそかだ・いい加減だ",memo:"",star:"★★"},
+  {no:26,ch:"第1章",word:"さうざうし",pos:"形容詞・シク活用",core:"物足りない・寂しい",memo:"「騒々しい」とは全くの別語",star:"★"},
+  {no:27,ch:"第1章",word:"なめげなり",pos:"形容動詞・ナリ活用",core:"無礼だ・失礼だ",memo:"",star:"★"},
+  {no:28,ch:"第1章",word:"なのめなり",pos:"形容動詞・ナリ活用",core:"平凡だ・いいかげんだ",memo:"",star:"★"},
+  {no:29,ch:"第1章",word:"あさまし",pos:"形容詞・シク活用",core:"驚きあきれるほどだ",memo:"驚き→あきれ→卑しさの3段階",star:"★★★"},
+  {no:30,ch:"第1章",word:"あさまし（続き）",pos:"形容詞・シク活用",core:"驚きあきれるほどだ（卑しい意も）",memo:"驚き・あきれ・卑しさの3段階。文脈判断が重要",star:"★★★"},
+  {no:31,ch:"第1章",word:"つらし",pos:"形容詞・ク活用",core:"薄情だ・冷たい",memo:"自分が「つらい」ではなく相手が「薄情だ」の意",star:"★"},
+  {no:32,ch:"第1章",word:"こころぐるし",pos:"形容詞・シク活用",core:"心が痛む・かわいそうだ",memo:"「心苦しい」≠「申し訳ない」。古典では同情の意",star:"★"},
+  {no:33,ch:"第1章",word:"おとなし",pos:"形容詞・シク活用",core:"大人びている・思慮分別がある",memo:"「大人」→年配→分別がある",star:"★★"},
+  {no:34,ch:"第1章",word:"はれ・け",pos:"名詞",core:"公式の場(晴れ)／日常(褻)",memo:"ハレとケの対比は古典常識",star:"★★★"},
+  {no:35,ch:"第1章",word:"はつかなり",pos:"形容動詞・ナリ活用",core:"ほのかだ・わずかだ",memo:"ほんの少し見える程度",star:"★★"},
+  {no:36,ch:"第1章",word:"むつかし",pos:"形容詞・シク活用",core:"不快だ・わずらわしい",memo:"「むずかる」＝不快に思う。現代語「難しい」とは違う",star:"★★★"},
+  {no:37,ch:"第1章",word:"おぼつかなし",pos:"形容詞・ク活用",core:"はっきりしない・気がかりだ",memo:"",star:"★★"},
+  {no:38,ch:"第1章",word:"こころもとなし",pos:"形容詞・ク活用",core:"待ち遠しい・じれったい・心配だ",memo:"",star:"★"},
+  {no:39,ch:"第1章",word:"いたづらなり",pos:"形容動詞・ナリ活用",core:"むなしい・無駄だ・暇だ",memo:"「いたずら（悪戯）」とは全くの別語",star:"★★★"},
+  {no:40,ch:"第1章",word:"つきづきし",pos:"形容詞・シク活用",core:"似つかわしい・ふさわしい",memo:"",star:"★"},
+  {no:41,ch:"第1章",word:"うつくし",pos:"形容詞・シク活用",core:"かわいい・愛らしい",memo:"現代語の「美しい」ではなく小さく愛らしいもの",star:"★"},
+  {no:42,ch:"第1章",word:"こころにくし",pos:"形容詞・ク活用",core:"奥ゆかしい・心引かれる",memo:"「心」＋「憎し」→憎いほど心引かれる",star:"★"},
+  {no:43,ch:"第1章",word:"をさをさ",pos:"副詞",core:"（打消と共に）ほとんど〜ない",memo:"",star:"★★★"},
+  {no:44,ch:"第1章",word:"さらに",pos:"副詞",core:"（打消と共に）まったく〜ない",memo:"現代語「さらに」の追加の意味ではない",star:"★★★"},
+  {no:45,ch:"第1章",word:"よも",pos:"副詞",core:"（打消推量と共に）まさか〜ないだろう",memo:"",star:"★"},
+  {no:46,ch:"第1章",word:"おほし",pos:"形容詞・ク活用",core:"多い・たくさんある",memo:"",star:"★"},
+  {no:47,ch:"第1章",word:"かた",pos:"名詞",core:"方面・方角・方法・人",memo:"婉曲的に人を指す",star:"★"},
+  {no:48,ch:"第1章",word:"よろづ",pos:"名詞",core:"すべて・さまざまな・たくさん",memo:"「万」の古語読み",star:"★"},
+  {no:49,ch:"第1章",word:"ものはかなし",pos:"形容詞",core:"頼りない・はかない",memo:"",star:"★★"},
+  {no:50,ch:"第1章",word:"はかなし",pos:"形容詞",core:"はかない・たわいもない",memo:"「はか」＝成果。成果がない→はかない",star:"★★"},
+  {no:51,ch:"第1章",word:"すさまじ",pos:"形容詞・シク活用",core:"興ざめだ・殺風景だ",memo:"",star:"★"},
+  {no:52,ch:"第1章",word:"やりみづ",pos:"名詞",core:"遣水（庭園の水路）",memo:"庭に水を引き流した小川。庭園の風景用語",star:"★"},
+  {no:53,ch:"第1章",word:"おぼゆ",pos:"動詞・ヤ行下二段",core:"思い出される・思われる・似る",memo:"「覚ゆ」。自発の意味が中心",star:"★"},
+  {no:54,ch:"第1章",word:"やさし",pos:"形容詞・シク活用",core:"恥ずかしい→優美だ・けなげだ",memo:"現代語の「優しい」とは異なる",star:"★"},
+  {no:55,ch:"第1章",word:"わりなし",pos:"形容詞・ク活用",core:"道理に合わない・つらい",memo:"「理無し」が語源",star:"★★★"},
+  // === 第2章 (No.56-94) ===
+  {no:56,ch:"第2章",word:"みやび",pos:"名詞",core:"宮廷風の上品な美しさ・優雅",memo:"「宮＋ぶ」→宮廷風",star:"★★"},
+  {no:57,ch:"第2章",word:"おかす",pos:"動詞",core:"押し切って〜する",memo:"「犯す」から→強引に行う",star:"★★"},
+  {no:58,ch:"第2章",word:"よそふ",pos:"動詞",core:"なぞらえる・比較する",memo:"",star:"★"},
+  {no:59,ch:"第2章",word:"いでそ",pos:"名詞/動詞",core:"出家する",memo:"仏門に入ること",star:"★★"},
+  {no:60,ch:"第2章",word:"つれなし",pos:"形容詞・ク活用",core:"何事もないような様子・冷淡だ",memo:"",star:"★★"},
+  {no:61,ch:"第2章",word:"うつろふ",pos:"動詞・ハ行四段",core:"色あせる・心変わりする",memo:"心が「色あせる」＝心変わり",star:"★★"},
+  {no:62,ch:"第2章",word:"やつる",pos:"動詞・ラ行下二段",core:"やつれる→地味になる・出家の姿になる",memo:"「やつれる」＝身をやつす→地味に",star:"★★"},
+  {no:63,ch:"第2章",word:"ものがたらふ",pos:"動詞",core:"物語をする・おしゃべりする",memo:"「物語る」の未然形＋「ふ」（継続）",star:"★"},
+  {no:64,ch:"第2章",word:"かづく",pos:"動詞",core:"褒美として被き物を与える",memo:"",star:"★★"},
+  {no:65,ch:"第2章",word:"かしづく",pos:"動詞",core:"大切に育てる・世話する",memo:"",star:"★★"},
+  {no:66,ch:"第2章",word:"ふるまふ",pos:"動詞",core:"振る舞う・行動する",memo:"",star:"★"},
+  {no:67,ch:"第2章",word:"つね",pos:"名詞",core:"普段・日常・常のこと",memo:"「常」。ハレとケの「ケ」に近い",star:"★"},
+  {no:68,ch:"第2章",word:"いとほし",pos:"形容詞",core:"気の毒だ・かわいそうだ",memo:"「愛」＋「惜し」→ 痛ましい→ かわいそう",star:"★★"},
+  {no:69,ch:"第2章",word:"せうそこ",pos:"名詞",core:"手紙・訪問・便り",memo:"「消息」の古語読み",star:"★"},
+  {no:70,ch:"第2章",word:"おほとのごもる",pos:"動詞",core:"お休みになる（尊敬語）",memo:"「大殿籠る」。貴人が寝ることの尊敬表現",star:"★★"},
+  {no:71,ch:"第2章",word:"すき",pos:"名詞",core:"風流を好むこと・好色",memo:"「数寄」。風流・恋愛に熱心なこと",star:"★"},
+  {no:72,ch:"第2章",word:"おほつかなし",pos:"形容詞・ク活用",core:"はっきりとしない・ぼんやりした様子",memo:"",star:"★★"},
+  {no:73,ch:"第2章",word:"かごとがまし",pos:"形容詞・シク活用",core:"恨みがましい",memo:"「かごと（恨み言）」の意と一緒に覚える",star:"★★"},
+  {no:74,ch:"第2章",word:"こまやかなり",pos:"形容動詞",core:"心がこもっている・親密だ",memo:"「恋」＋「甚し」→心がこもっている",star:"★★"},
+  {no:75,ch:"第2章",word:"ものがたり",pos:"名詞",core:"物語・おしゃべり",memo:"「物」＋「語り」。話をすること",star:"★"},
+  {no:76,ch:"第2章",word:"やむごとなし",pos:"形容詞・ク活用",core:"高貴だ・捨てておけない",memo:"「止む＋こと＋なし」",star:"★"},
+  {no:77,ch:"第2章",word:"あやし",pos:"形容詞・シク活用",core:"不思議だ・身分が低い",memo:"「怪し」と「賤し」の二系統",star:"★★★"},
+  {no:78,ch:"第2章",word:"つれづれなり",pos:"形容動詞・ナリ活用",core:"退屈だ・ものさみしい",memo:"「徒然」。同じような状態が続く→退屈の意に",star:"★★★"},
+  {no:79,ch:"第2章",word:"むげなり",pos:"形容動詞・ナリ活用",core:"全くひどい",memo:"「無下(下無し)」→最低→全くひどい",star:"★★"},
+  {no:80,ch:"第2章",word:"ふみ",pos:"名詞",core:"漢籍・手紙・学問",memo:"「文」の意味は文脈で判断",star:"★★"},
+  {no:81,ch:"第2章",word:"けしき",pos:"名詞",core:"様子・気配・意向",memo:"「気色」→「景色」ではなく人の様子",star:"★★★"},
+  {no:82,ch:"第2章",word:"しのぶ",pos:"動詞",core:"忍ぶ＝我慢する／偲ぶ＝懐かしむ",memo:"二つの「しのぶ」を区別",star:"★★"},
+  {no:83,ch:"第2章",word:"あいぎやう",pos:"名詞",core:"愛敬・愛嬌",memo:"現代語にない意味に注意",star:"★★"},
+  {no:84,ch:"第2章",word:"ざえ",pos:"名詞",core:"男子が身につけるべき漢詩文などの学問",memo:"「才」→学問・学才",star:"★★"},
+  {no:85,ch:"第2章",word:"みゆ",pos:"動詞",core:"見える・見られる・会う",memo:"「見ゆ」→姿を見せる意味も",star:"★★"},
+  {no:86,ch:"第2章",word:"いぬ",pos:"動詞",core:"去る・消える",memo:"「往ぬ」＝行ってしまう",star:"★★"},
+  {no:87,ch:"第2章",word:"こふ",pos:"動詞",core:"恋い慕う",memo:"「恋ふ」→恋い慕う",star:"★★"},
+  {no:88,ch:"第2章",word:"はべり",pos:"動詞",core:"お仕えする／（丁寧語）ございます",memo:"「侍り」。丁寧語としての用法が重要",star:"★★★"},
+  {no:89,ch:"第2章",word:"こころ",pos:"名詞",core:"人の精神・物事の本質",memo:"訳し分けが必要。精神・気持ち・本質・意味など",star:"★★★"},
+  {no:90,ch:"第2章",word:"かたらふ",pos:"動詞",core:"親密に語り合う・契りを結ぶ",memo:"「語らふ」は親密な関係を示す",star:"★★"},
+  {no:91,ch:"第2章",word:"よ",pos:"名詞",core:"世＝男女の仲",memo:"「世」＝時代だけでなく男女関係も",star:"★★★"},
+  {no:92,ch:"第2章",word:"ありく",pos:"動詞・カ行四段",core:"歩き回る・〜して回る",memo:"「歩く」。補助動詞的にも使う",star:"★"},
+  {no:93,ch:"第2章",word:"なく",pos:"動詞",core:"泣く・鳴く",memo:"愛しさが高じて泣く意味も",star:"★"},
+  {no:94,ch:"第2章",word:"たてまつる",pos:"動詞",core:"差し上げる（謙譲語）",memo:"「奉る」。補助動詞で〜申し上げるの意も",star:"★"},
+  // === 第3章 (No.95-147) ===
+  {no:95,ch:"第3章",word:"ゐる",pos:"動詞・ワ行上一段",core:"座る・（そこに）いる・連れていく",memo:"「居る」は①すわる②率る＝連れる",star:"★★★"},
+  {no:96,ch:"第3章",word:"ぐす",pos:"動詞・サ行変格",core:"連れていく・備わる",memo:"「具（備える）」の意味をもつ言葉",star:"★★"},
+  {no:97,ch:"第3章",word:"かこつ",pos:"動詞",core:"口実にする・かこつける・嘆く",memo:"",star:"★★"},
+  {no:98,ch:"第3章",word:"まうく",pos:"動詞・カ行下二段",core:"用意する・準備する",memo:"「設く」",star:"★"},
+  {no:99,ch:"第3章",word:"おくる",pos:"動詞・ラ行下二段",core:"先立たれる・死に遅れる",memo:"「後る／遅る」",star:"★"},
+  {no:100,ch:"第3章",word:"おもひまぎる／おもひなす",pos:"動詞",core:"思いを紛らわす／そう思い込む",memo:"「思ひ」＋「紛る」「なす」の複合動詞",star:"★★"},
+  {no:101,ch:"第3章",word:"ちる／うつる",pos:"動詞",core:"散る／移る（生死や無常に関わる語）",memo:"無常観を表す動詞の対比",star:"★"},
+  {no:102,ch:"第3章",word:"おりゐる",pos:"動詞",core:"降りて座る・退位する",memo:"「降り居る」の複合動詞",star:"★"},
+  {no:103,ch:"第3章",word:"はかなし",pos:"形容詞・ク活用",core:"頼りない・たわいもない",memo:"「はか（果）なし」が語源",star:"★★★"},
+  {no:104,ch:"第3章",word:"はかばかし",pos:"形容詞・シク活用",core:"はっきりしている・しっかりしている",memo:"「はか」が甚だしい",star:"★★"},
+  {no:105,ch:"第3章",word:"たのもし",pos:"形容詞・シク活用",core:"頼りになる・心強い",memo:"",star:"★★"},
+  {no:106,ch:"第3章",word:"らうたし",pos:"形容詞・ク活用",core:"かわいらしい",memo:"「労＋甚し」→かわいい。類義語: うつくし・いとほし",star:"★★★"},
+  {no:107,ch:"第3章",word:"かしこし",pos:"形容詞・ク活用",core:"恐れ多い・恐ろしい",memo:"自然の霊力や権力者の威光を恐れ敬う感じ",star:"★★★"},
+  {no:108,ch:"第3章",word:"あなかしこ",pos:"感動詞",core:"近寄りにくい・恐れ多い",memo:"「あな」＋「かしこし」。手紙の結びにも使う",star:"★★"},
+  {no:109,ch:"第3章",word:"いとほし／いとはし",pos:"形容詞",core:"気の毒だ／嫌だ",memo:"いとほし＝同情系、いとはし＝嫌悪系",star:"★★"},
+  {no:110,ch:"第3章",word:"かたはらいたし",pos:"形容詞・ク活用",core:"はらはらする・きまりが悪い",memo:"「かたはら」＋「いたし」",star:"★★★"},
+  {no:111,ch:"第3章",word:"こころうし",pos:"形容詞・ク活用",core:"つらい・情けない",memo:"「心」＋「憂し」",star:"★★"},
+  {no:112,ch:"第3章",word:"くちをし",pos:"形容詞・シク活用",core:"残念だ・惜しい",memo:"「朽ち」＋「惜し」",star:"★★★"},
+  {no:113,ch:"第3章",word:"あはれ／あはれなり",pos:"感動詞/形容動詞",core:"しみじみと心にしみる",memo:"「あはれ」はキーワード。感動・同情・悲しみ",star:"★★★"},
+  {no:114,ch:"第3章",word:"をかし",pos:"形容詞・シク活用",core:"趣がある・興味深い・風情を感じる",memo:"「あはれ」との違いを意識",star:"★★★"},
+  {no:115,ch:"第3章",word:"おもしろし",pos:"形容詞・ク活用",core:"心が晴れ晴れするような趣",memo:"関連語：をかし",star:"★★"},
+  {no:116,ch:"第3章",word:"あへなし",pos:"形容詞・ク活用",core:"あっけない・どうしようもない",memo:"「敢ふ」＋「無し」→しいて〜できない",star:"★★"},
+  {no:117,ch:"第3章",word:"おどろおどろし",pos:"形容詞",core:"おおげさだ・気味が悪い",memo:"",star:"★★"},
+  {no:118,ch:"第3章",word:"えんなり",pos:"形容動詞・ナリ活用",core:"優美だ・上品で美しい",memo:"艶然",star:"★★"},
+  {no:119,ch:"第3章",word:"わろし",pos:"形容詞・ク活用",core:"よくない・感心しない",memo:"よし＞よろし＞わろし＞あし",star:"★★★"},
+  {no:120,ch:"第3章",word:"めざまし",pos:"形容詞・シク活用",core:"驚くほどだ・気にくわない・すばらしい",memo:"「目覚まし」。目が覚めるほどの驚き",star:"★"},
+  {no:121,ch:"第3章",word:"はしたなし（再掲）",pos:"形容詞・ク活用",core:"きまりが悪い・中途半端だ",memo:"14と同じ語。第3章では関連語と比較",star:"★★★"},
+  {no:122,ch:"第3章",word:"なかなかなり",pos:"形容動詞・ナリ活用",core:"中途半端だ・かえって〜だ",memo:"中途半端なぐらいなら→しないほうがよい",star:"★★★"},
+  {no:123,ch:"第3章",word:"おぼろけなり",pos:"形容動詞・ナリ活用",core:"並一通りだ・普通だ",memo:"",star:"★"},
+  {no:124,ch:"第3章",word:"いうなり",pos:"形容動詞・ナリ活用",core:"優美だ・優雅だ",memo:"「言う」ではない→「優美・優雅」の「優」と覚える",star:"★★★"},
+  {no:125,ch:"第3章",word:"あてなり",pos:"形容動詞・ナリ活用",core:"上品だ・高貴だ",memo:"",star:"★★"},
+  {no:126,ch:"第3章",word:"えんなり（再掲）",pos:"形容動詞・ナリ活用",core:"優美だ",memo:"124いうなり・125あてなりとの比較",star:"★★"},
+  {no:127,ch:"第3章",word:"えせなり",pos:"形容動詞・ナリ活用",core:"偽物だ・いい加減だ",memo:"「似非なり」",star:"★"},
+  {no:128,ch:"第3章",word:"ねんごろなり",pos:"形容動詞・ナリ活用",core:"心をこめて丁寧だ・親密だ",memo:"「懇ろなり」",star:"★"},
+  {no:129,ch:"第3章",word:"まめなり",pos:"形容動詞・ナリ活用",core:"誠実だ・実用的だ",memo:"まめな人→誠実な人/まめな物→実用的",star:"★★★"},
+  {no:130,ch:"第3章",word:"あだなり",pos:"形容動詞・ナリ活用",core:"はかない・不誠実だ・浮気だ",memo:"「まめなり」の対義語",star:"★"},
+  {no:131,ch:"第3章",word:"すずろなり／そぞろなり",pos:"形容動詞・ナリ活用",core:"あてもない・むやみだ・思いがけない",memo:"「漫ろなり」",star:"★"},
+  {no:132,ch:"第3章",word:"ことわりなり",pos:"名詞/形容動詞",core:"道理だ・当然だ",memo:"「理」のこと。「断り」とは全く別の語",star:"★★★"},
+  {no:133,ch:"第3章",word:"わりなし",pos:"形容詞・ク活用",core:"道理に合わない・つらい",memo:"ことわりなりとの対比で覚える。「理無し」が語源",star:"★★★"},
+  {no:134,ch:"第3章",word:"よし",pos:"名詞",core:"理由・方法・手段・縁故",memo:"「由」",star:"★"},
+  {no:135,ch:"第3章",word:"よしなし",pos:"形容詞・ク活用",core:"つまらない・方法がない",memo:"「よし（由）」＋「無し」",star:"★"},
+  {no:136,ch:"第3章",word:"ゆゑ",pos:"名詞",core:"理由・原因・由緒・風情",memo:"「故」",star:"★"},
+  {no:137,ch:"第3章",word:"なさけ",pos:"名詞",core:"風流を解する心・思いやり",memo:"中に「心」を含む語群。「情」",star:"★★"},
+  {no:138,ch:"第3章",word:"ふみ",pos:"名詞",core:"手紙・漢籍・学問",memo:"「文」の意味を文脈から判断。多義語",star:"★★"},
+  {no:139,ch:"第3章",word:"おきて",pos:"名詞",core:"しきたり・方法・準備",memo:"「掟」→「起きて」ではない",star:"★★"},
+  {no:140,ch:"第3章",word:"おきてなし",pos:"形容詞",core:"方法がない・あてにならない",memo:"「おきて」＋「なし」",star:"★★"},
+  {no:141,ch:"第3章",word:"かたみ",pos:"名詞",core:"形見→思い出の品・互いに",memo:"「形」＋「身」→亡き人の思い出",star:"★★"},
+  {no:142,ch:"第3章",word:"かたち",pos:"名詞",core:"顔・容貌・姿",memo:"「形」ではなく「顔立ち」が中心の意味",star:"★★★"},
+  {no:143,ch:"第3章",word:"さし",pos:"副詞",core:"（打消と共に）たいして〜ない",memo:"「さしたる事なき」などの形で使う",star:"★"},
+  {no:144,ch:"第3章",word:"え",pos:"副詞",core:"（打消と共に）〜できない",memo:"「え〜ず」の形で頻出",star:"★★★"},
+  {no:145,ch:"第3章",word:"いさ",pos:"感動詞",core:"さあ、どうでしょうか",memo:"あいまいにごまかす感動詞",star:"★★"},
+  {no:146,ch:"第3章",word:"いざ",pos:"感動詞",core:"さあ（人を誘う）",memo:"「いさ」と「いざ」を区別。「いざ」は誘い",star:"★★★"},
+  {no:147,ch:"第3章",word:"あな",pos:"感動詞",core:"ああ（感嘆・驚き）",memo:"「あなかしこ」「あなめでたや」等",star:"★"},
+];
+
+// ===== LOCAL STORAGE =====
+const STORAGE_KEY = "kobun_tango_status";
+
+function loadStatus() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return d || {};
+  } catch { return {}; }
+}
+
+function saveStatus(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getWordStatus(no) {
+  return loadStatus()[no] || "unknown";
+}
+
+function setWordStatus(no, status) {
+  const d = loadStatus();
+  d[no] = status;
+  saveStatus(d);
+}
+
+function resetProgress() {
+  localStorage.removeItem(STORAGE_KEY);
+  updateDashboard();
+  renderTable();
+  renderFC();
+}
+
+// ===== NAVIGATION =====
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+  if (id === "dashboard") updateDashboard();
+  if (id === "flashcard") initFlashcards();
+  if (id === "reference") { renderTable(); }
+}
+
+// ===== DASHBOARD =====
+function updateDashboard() {
+  const status = loadStatus();
+  let known = 0, learning = 0;
+  WORDS.forEach(w => {
+    const s = status[w.no] || "unknown";
+    if (s === "known") known++;
+    else if (s === "learning") learning++;
+  });
+  const total = WORDS.length;
+  const unknown = total - known - learning;
+
+  document.getElementById("d-total").textContent = total;
+  document.getElementById("d-known").textContent = known;
+  document.getElementById("d-learning").textContent = learning;
+  document.getElementById("d-unknown").textContent = unknown;
+  document.getElementById("d-bar-known").style.width = `${(known/total)*100}%`;
+  document.getElementById("d-bar-learning").style.width = `${(learning/total)*100}%`;
+
+  const chapters = ["第1章","第2章","第3章"];
+  const listEl = document.getElementById("chapter-list");
+  listEl.innerHTML = "";
+  chapters.forEach(ch => {
+    const chWords = WORDS.filter(w => w.ch === ch);
+    let chKnown = 0, chLearning = 0;
+    chWords.forEach(w => {
+      const s = status[w.no] || "unknown";
+      if (s === "known") chKnown++;
+      else if (s === "learning") chLearning++;
+    });
+    const pct = chWords.length ? Math.round(((chKnown + chLearning * 0.5) / chWords.length) * 100) : 0;
+    const row = document.createElement("div");
+    row.className = "chapter-row";
+    row.innerHTML = `
+      <span class="ch-name">${ch}</span>
+      <div class="bar-bg">
+        <div style="width:${(chKnown/chWords.length)*100}%;background:var(--known);"></div>
+        <div style="width:${(chLearning/chWords.length)*100}%;background:var(--learning);"></div>
+      </div>
+      <span class="pct">${chKnown}/${chWords.length}</span>
+    `;
+    row.onclick = () => {
+      document.getElementById("fc-chapter").value = ch;
+      document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".nav button")[1].classList.add("active");
+      showSectionDirect("flashcard");
+      initFlashcards();
+    };
+    listEl.appendChild(row);
+  });
+}
+
+function showSectionDirect(id) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+// ===== FLASHCARD =====
+let fcCards = [];
+let fcIdx = 0;
+
+function getFilteredWords() {
+  const ch = document.getElementById("fc-chapter").value;
+  const star = document.getElementById("fc-star").value;
+  const st = document.getElementById("fc-status").value;
+  const status = loadStatus();
+
+  return WORDS.filter(w => {
+    if (ch !== "all" && w.ch !== ch) return false;
+    if (star === "★★★" && w.star !== "★★★") return false;
+    if (star === "★★" && w.star === "★") return false;
+    if (st !== "all") {
+      const ws = status[w.no] || "unknown";
+      if (ws !== st) return false;
+    }
+    return true;
+  });
+}
+
+function initFlashcards() {
+  fcCards = getFilteredWords();
+  fcIdx = 0;
+  renderFC();
+}
+
+function shuffleFC() {
+  for (let i = fcCards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fcCards[i], fcCards[j]] = [fcCards[j], fcCards[i]];
+  }
+  fcIdx = 0;
+  renderFC();
+}
+
+function renderFC() {
+  if (!fcCards.length) {
+    document.getElementById("fc-word").textContent = "該当する単語がありません";
+    document.getElementById("fc-pos").textContent = "";
+    document.getElementById("fc-meaning").textContent = "";
+    document.getElementById("fc-memo").textContent = "";
+    document.getElementById("fc-chapter-badge").textContent = "";
+    document.getElementById("fc-star-badge").textContent = "";
+    document.getElementById("fc-counter").textContent = "0 / 0";
+    document.getElementById("fc-progress").style.width = "0%";
+    return;
+  }
+  const w = fcCards[fcIdx];
+  document.getElementById("fc-chapter-badge").textContent = w.ch;
+  const starClass = w.star === "★★★" ? "s3" : w.star === "★★" ? "s2" : "s1";
+  document.getElementById("fc-star-badge").className = `star ${starClass}`;
+  document.getElementById("fc-star-badge").textContent = w.star;
+  document.getElementById("fc-word").textContent = w.word;
+  document.getElementById("fc-pos").textContent = w.pos;
+  document.getElementById("fc-meaning").textContent = w.core;
+  document.getElementById("fc-memo").textContent = w.memo || "";
+  document.getElementById("fc-memo").style.display = w.memo ? "block" : "none";
+  document.getElementById("fc-main").classList.remove("revealed");
+  document.getElementById("fc-counter").textContent = `${fcIdx + 1} / ${fcCards.length}`;
+  document.getElementById("fc-progress").style.width = `${((fcIdx + 1) / fcCards.length) * 100}%`;
+
+  // Update status button highlights
+  const ws = getWordStatus(w.no);
+  document.getElementById("fc-btn-unknown").style.opacity = ws === "unknown" ? 1 : 0.4;
+  document.getElementById("fc-btn-learning").style.opacity = ws === "learning" ? 1 : 0.4;
+  document.getElementById("fc-btn-known").style.opacity = ws === "known" ? 1 : 0.4;
+}
+
+function toggleFC() {
+  document.getElementById("fc-main").classList.toggle("revealed");
+}
+
+function nextFC() {
+  if (fcIdx < fcCards.length - 1) { fcIdx++; renderFC(); }
+}
+
+function prevFC() {
+  if (fcIdx > 0) { fcIdx--; renderFC(); }
+}
+
+function setStatus(status) {
+  if (!fcCards.length) return;
+  const w = fcCards[fcIdx];
+  setWordStatus(w.no, status);
+  renderFC();
+}
+
+// ===== QUIZ =====
+let quizQs = [];
+let quizIdx = 0;
+let quizScore = 0;
+let quizMistakes = [];
+
+function startQuiz() {
+  const cbs = document.querySelectorAll("#quiz-setup .quiz-options input:checked");
+  const chapters = Array.from(cbs).map(c => c.value);
+  if (!chapters.length) { alert("出題範囲を1つ以上選んでください"); return; }
+
+  const mode = document.getElementById("quiz-mode").value;
+  const starOnly = document.getElementById("quiz-star-only").checked;
+  const count = parseInt(document.getElementById("quiz-count").value);
+
+  let pool = WORDS.filter(w => chapters.includes(w.ch));
+  if (starOnly) pool = pool.filter(w => w.star === "★★★");
+  if (pool.length < 4) { alert("出題可能な単語が少なすぎます"); return; }
+
+  // shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  quizQs = pool.slice(0, Math.min(count, pool.length)).map(w => ({
+    ...w,
+    mode
+  }));
+  quizIdx = 0;
+  quizScore = 0;
+  quizMistakes = [];
+
+  document.getElementById("quiz-setup").style.display = "none";
+  document.getElementById("quiz-area").style.display = "block";
+  document.getElementById("quiz-result").style.display = "none";
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (quizIdx >= quizQs.length) { showQuizResult(); return; }
+  const q = quizQs[quizIdx];
+  const isWordToMeaning = q.mode === "word-to-meaning";
+
+  document.getElementById("q-label").textContent = `第${quizIdx + 1}問 / ${quizQs.length}問`;
+  document.getElementById("q-text").textContent = isWordToMeaning ? q.word : q.core;
+  document.getElementById("q-sub").textContent = isWordToMeaning ? `${q.ch}｜${q.pos}` : `${q.ch}｜この意味の古語は？`;
+  document.getElementById("quiz-progress").style.width = `${(quizIdx / quizQs.length) * 100}%`;
+
+  // Build choices
+  const correct = isWordToMeaning ? q.core : q.word;
+  const allAnswers = new Set([correct]);
+  const otherWords = WORDS.filter(w => w.no !== q.no);
+  const shuffledOthers = otherWords.sort(() => Math.random() - 0.5);
+  for (const w of shuffledOthers) {
+    if (allAnswers.size >= 4) break;
+    const ans = isWordToMeaning ? w.core : w.word;
+    allAnswers.add(ans);
+  }
+
+  const choices = Array.from(allAnswers).sort(() => Math.random() - 0.5);
+  const choicesDiv = document.getElementById("q-choices");
+  choicesDiv.innerHTML = "";
+  choices.forEach(ch => {
+    const btn = document.createElement("button");
+    btn.textContent = ch;
+    btn.onclick = () => answerQuiz(btn, ch, correct, q);
+    choicesDiv.appendChild(btn);
+  });
+
+  document.getElementById("q-feedback").className = "quiz-feedback";
+  document.getElementById("q-feedback").innerHTML = "";
+  document.getElementById("q-next").className = "quiz-next";
+}
+
+function answerQuiz(btn, selected, correct, q) {
+  const buttons = document.querySelectorAll("#q-choices button");
+  buttons.forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add("correct");
+  });
+
+  const fb = document.getElementById("q-feedback");
+  if (selected === correct) {
+    quizScore++;
+    let html = "正解！";
+    if (q.memo) html += `<div class="fb-memo">${q.memo}</div>`;
+    fb.innerHTML = html;
+    fb.className = "quiz-feedback show correct-fb";
+    // Auto-update status to learning if unknown
+    if (getWordStatus(q.no) === "unknown") setWordStatus(q.no, "learning");
+  } else {
+    btn.classList.add("wrong");
+    let html = `不正解… 正解は「${correct}」`;
+    if (q.memo) html += `<div class="fb-memo">${q.memo}</div>`;
+    fb.innerHTML = html;
+    fb.className = "quiz-feedback show wrong-fb";
+    quizMistakes.push({ word: q.word, core: q.core, correct, selected, mode: q.mode });
+  }
+
+  document.getElementById("q-next").className = "quiz-next show";
+}
+
+function nextQuiz() {
+  quizIdx++;
+  renderQuiz();
+}
+
+function showQuizResult() {
+  document.getElementById("quiz-area").style.display = "none";
+  const pct = Math.round((quizScore / quizQs.length) * 100);
+  const grade = pct >= 90 ? "素晴らしい！" : pct >= 70 ? "よくできました！" : pct >= 50 ? "もう少し！" : "復習しよう！";
+  const emoji = pct >= 90 ? "&#127775;" : pct >= 70 ? "&#128079;" : pct >= 50 ? "&#128170;" : "&#128214;";
+
+  let html = `<h2>${emoji} ${grade}</h2>
+    <div class="result-score">${quizScore}<span class="total"> / ${quizQs.length}</span></div>
+    <div class="result-detail">正答率: ${pct}%</div>`;
+
+  if (quizMistakes.length > 0) {
+    html += `<div class="mistakes-list"><h3>間違えた問題:</h3>`;
+    quizMistakes.forEach(m => {
+      const isWTM = m.mode === "word-to-meaning";
+      html += `<div class="mistake-item">
+        <strong>${isWTM ? m.word : m.core}</strong><br>
+        あなたの答え: ${m.selected} → <span class="correct-ans">正解: ${m.correct}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<br><button class="btn-start" onclick="resetQuiz()">もう一度</button>`;
+  const res = document.getElementById("quiz-result");
+  res.innerHTML = html;
+  res.style.display = "block";
+}
+
+function resetQuiz() {
+  document.getElementById("quiz-setup").style.display = "block";
+  document.getElementById("quiz-result").style.display = "none";
+}
+
+// ===== REFERENCE TABLE =====
+let sortCol = 0;
+let sortAsc = true;
+
+function renderTable() {
+  const tbody = document.getElementById("ref-tbody");
+  const search = (document.getElementById("ref-search").value || "").toLowerCase();
+  const ch = document.getElementById("ref-chapter").value;
+  const star = document.getElementById("ref-star").value;
+  const status = loadStatus();
+
+  let filtered = WORDS.filter(w => {
+    if (ch !== "all" && w.ch !== ch) return false;
+    if (star !== "all" && w.star !== star) return false;
+    if (search) {
+      const s = (w.word + w.core + w.memo + w.pos).toLowerCase();
+      if (!s.includes(search)) return false;
+    }
+    return true;
+  });
+
+  // Sort
+  filtered.sort((a, b) => {
+    let va, vb;
+    switch(sortCol) {
+      case 0: va = a.no; vb = b.no; break;
+      case 1: va = a.ch; vb = b.ch; break;
+      case 2: va = a.word; vb = b.word; break;
+      case 3: va = a.pos; vb = b.pos; break;
+      case 4: va = a.core; vb = b.core; break;
+      case 5: va = a.memo; vb = b.memo; break;
+      case 6: va = a.star.length; vb = b.star.length; break;
+      default: va = a.no; vb = b.no;
+    }
+    if (typeof va === "string") {
+      return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    }
+    return sortAsc ? va - vb : vb - va;
+  });
+
+  document.getElementById("ref-count").textContent = `${filtered.length}語を表示`;
+
+  tbody.innerHTML = "";
+  filtered.forEach(w => {
+    const ws = status[w.no] || "unknown";
+    const starClass = w.star === "★★★" ? "s3" : w.star === "★★" ? "s2" : "s1";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${w.no}</td>
+      <td>${w.ch}</td>
+      <td><strong>${w.word}</strong></td>
+      <td style="font-size:0.8em;">${w.pos}</td>
+      <td>${w.core}</td>
+      <td style="font-size:0.8em;color:#888;">${w.memo}</td>
+      <td class="star-cell ${starClass}">${w.star}</td>
+      <td style="text-align:center;"><span class="status-dot ${ws}" onclick="cycleStatus(${w.no},this)" title="クリックで変更"></span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterTable() {
+  renderTable();
+}
+
+function sortTable(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  renderTable();
+}
+
+function cycleStatus(no, el) {
+  const current = getWordStatus(no);
+  const next = current === "unknown" ? "learning" : current === "learning" ? "known" : "unknown";
+  setWordStatus(no, next);
+  el.className = `status-dot ${next}`;
+}
+
+// ===== KEYBOARD =====
+document.addEventListener("keydown", e => {
+  if (document.getElementById("flashcard").classList.contains("active")) {
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); nextFC(); }
+    if (e.key === "ArrowLeft") prevFC();
+    if (e.key === "Enter") toggleFC();
+    if (e.key === "1") setStatus("unknown");
+    if (e.key === "2") setStatus("learning");
+    if (e.key === "3") setStatus("known");
+  }
+});
+
+// ===== INIT =====
+updateDashboard();
+renderTable();
+</script>
+
+</body>
+</html>
