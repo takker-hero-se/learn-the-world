@@ -596,6 +596,74 @@
   .btn-danger { background: var(--wrong); color: white; }
   .btn-danger:hover { background: #c0392b; }
 
+  /* ===== Resume Prompt ===== */
+  .resume-prompt {
+    background: linear-gradient(135deg, #4a69bd, #6c5ce7);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    color: white;
+    box-shadow: 0 4px 20px rgba(106, 92, 231, 0.3);
+    animation: resumeSlideIn 0.4s ease-out;
+  }
+
+  @keyframes resumeSlideIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .resume-prompt h3 {
+    font-size: 1.15em;
+    margin-bottom: 8px;
+  }
+
+  .resume-prompt .resume-description {
+    font-size: 0.9em;
+    opacity: 0.9;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .resume-prompt .resume-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .resume-prompt .btn-resume {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    color: #4a69bd;
+  }
+
+  .resume-prompt .btn-resume:hover {
+    background: #f0f0f0;
+    transform: translateY(-1px);
+  }
+
+  .resume-prompt .btn-restart {
+    padding: 10px 24px;
+    border: 2px solid rgba(255,255,255,0.6);
+    border-radius: 10px;
+    font-size: 0.95em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: white;
+  }
+
+  .resume-prompt .btn-restart:hover {
+    border-color: white;
+    background: rgba(255,255,255,0.1);
+  }
+
   @media (max-width: 600px) {
     .quiz-choices { grid-template-columns: 1fr; }
     .flashcard .question { font-size: 1.4em; }
@@ -622,6 +690,14 @@
 
   <!-- ========== DASHBOARD ========== -->
   <div id="dashboard" class="section">
+    <div id="resume-prompt" class="resume-prompt" style="display:none;">
+      <h3>前回の続きから始めますか？</h3>
+      <div class="resume-description" id="resume-description"></div>
+      <div class="resume-buttons">
+        <button class="btn-resume" onclick="resumeLastSession()">続きから</button>
+        <button class="btn-restart" onclick="dismissResume()">最初から</button>
+      </div>
+    </div>
     <div class="streak-bar" id="streak-display">
       <span class="streak-fire">&#128293;</span>
       <span class="streak-num" id="streak-current">0</span>
@@ -1279,6 +1355,12 @@ function renderDashboard() {
 
   // Streak
   renderStreak();
+
+  // Show resume prompt if a session exists and it's not a dashboard session
+  const lastSession = loadSession();
+  if (lastSession && lastSession.section !== 'dashboard') {
+    showResumePrompt();
+  }
 }
 
 function startReviewQuiz() {
@@ -1323,6 +1405,7 @@ function exportData() {
     status: loadStatus(),
     streak: loadStreak(),
     srs: loadSRS(),
+    lastSession: JSON.parse(localStorage.getItem('katsuyou_last_session') || 'null'),
     exportDate: getTodayStr()
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1348,6 +1431,7 @@ function handleImport(event) {
       if (data.status) localStorage.setItem('katsuyou_status', JSON.stringify(data.status));
       if (data.streak) localStorage.setItem('katsuyou_streak', JSON.stringify(data.streak));
       if (data.srs) localStorage.setItem('katsuyou_srs', JSON.stringify(data.srs));
+      if (data.lastSession) localStorage.setItem('katsuyou_last_session', JSON.stringify(data.lastSession));
       alert('データをインポートしました！');
       renderDashboard();
     } catch(err) {
@@ -1363,6 +1447,7 @@ function resetAllData() {
   localStorage.removeItem('katsuyou_status');
   localStorage.removeItem('katsuyou_streak');
   localStorage.removeItem('katsuyou_srs');
+  localStorage.removeItem('katsuyou_last_session');
   alert('データをリセットしました。');
   renderDashboard();
 }
@@ -1437,6 +1522,7 @@ function renderCard() {
   document.getElementById("flashcard-main").classList.remove("revealed");
   document.getElementById("fc-counter").textContent = `${fcIndex + 1} / ${fcCards.length}`;
   document.getElementById("fc-progress").style.width = `${((fcIndex + 1) / fcCards.length) * 100}%`;
+  saveFlashcardSession();
 }
 
 function toggleReveal() {
@@ -1570,6 +1656,9 @@ function answerQuiz(btn, selected, correct) {
   // Record daily study
   recordStudy();
 
+  // Save quiz session
+  saveQuizSession();
+
   document.getElementById("q-next").className = "quiz-next show";
 }
 
@@ -1616,7 +1705,10 @@ function showSection(id) {
   document.getElementById(id).classList.add("active");
   document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
   event.target.classList.add("active");
-  if (id === 'dashboard') renderDashboard();
+  if (id === 'dashboard') {
+    saveDashboardSession();
+    renderDashboard();
+  }
 }
 
 function showSectionById(id) {
@@ -1629,7 +1721,10 @@ function showSectionById(id) {
     if (b.textContent.includes('ダッシュボード') && id === 'dashboard') b.classList.add("active");
     if (b.textContent.includes('フラッシュカード') && id === 'flashcard') b.classList.add("active");
   });
-  if (id === 'dashboard') renderDashboard();
+  if (id === 'dashboard') {
+    saveDashboardSession();
+    renderDashboard();
+  }
 }
 
 // ===== KEYBOARD =====
@@ -1640,6 +1735,122 @@ document.addEventListener("keydown", e => {
     if (e.key === "Enter") toggleReveal();
   }
 });
+
+// ===== SESSION TRACKING =====
+const SESSION_KEY = 'katsuyou_last_session';
+
+function saveSession(data) {
+  data.timestamp = Date.now();
+  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+}
+
+function loadSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY));
+  } catch(e) { return null; }
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+function saveFlashcardSession() {
+  const cat = document.getElementById('fc-category').value;
+  const catLabel = CATEGORY_LABELS[cat] || cat;
+  const total = fcCards.length;
+  const idx = fcIndex;
+  const description = `フラッシュカード ${catLabel} - ${idx + 1}/${total}枚目`;
+  saveSession({
+    section: 'flashcard',
+    cardIndex: idx,
+    category: cat,
+    description: description
+  });
+}
+
+function saveQuizSession() {
+  const checkboxes = document.querySelectorAll('#quiz-setup input[type=checkbox]:checked');
+  const cats = Array.from(checkboxes).map(cb => cb.value);
+  const description = `クイズ - ${quizIndex + 1}問目`;
+  saveSession({
+    section: 'quiz',
+    quizIndex: quizIndex,
+    selectedCategories: cats,
+    description: description
+  });
+}
+
+function saveDashboardSession() {
+  saveSession({
+    section: 'dashboard',
+    description: 'ダッシュボード'
+  });
+}
+
+function showResumePrompt() {
+  const session = loadSession();
+  if (!session) return;
+
+  const promptEl = document.getElementById('resume-prompt');
+  const descEl = document.getElementById('resume-description');
+  if (!promptEl || !descEl) return;
+
+  // Show how long ago the session was
+  let timeAgo = '';
+  if (session.timestamp) {
+    const diff = Date.now() - session.timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    if (days > 0) timeAgo = `${days}日前`;
+    else if (hours > 0) timeAgo = `${hours}時間前`;
+    else if (minutes > 0) timeAgo = `${minutes}分前`;
+    else timeAgo = 'たった今';
+  }
+
+  descEl.textContent = session.description + (timeAgo ? ` (${timeAgo})` : '');
+  promptEl.style.display = 'block';
+}
+
+function resumeLastSession() {
+  const session = loadSession();
+  if (!session) return;
+
+  const promptEl = document.getElementById('resume-prompt');
+  if (promptEl) promptEl.style.display = 'none';
+
+  if (session.section === 'flashcard') {
+    // Set category and navigate
+    const catSelect = document.getElementById('fc-category');
+    if (session.category && catSelect) {
+      catSelect.value = session.category;
+    }
+    initFlashcards();
+    // Restore card index
+    if (typeof session.cardIndex === 'number' && session.cardIndex < fcCards.length) {
+      fcIndex = session.cardIndex;
+      renderCard();
+    }
+    showSectionById('flashcard');
+  } else if (session.section === 'quiz') {
+    // Restore selected categories
+    if (session.selectedCategories && session.selectedCategories.length > 0) {
+      const checkboxes = document.querySelectorAll('#quiz-setup input[type=checkbox]');
+      checkboxes.forEach(cb => {
+        cb.checked = session.selectedCategories.includes(cb.value);
+      });
+    }
+    showSectionById('quiz');
+  } else if (session.section === 'dashboard') {
+    showSectionById('dashboard');
+  }
+}
+
+function dismissResume() {
+  clearSession();
+  const promptEl = document.getElementById('resume-prompt');
+  if (promptEl) promptEl.style.display = 'none';
+}
 
 // ===== INIT =====
 initFlashcards();

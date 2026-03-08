@@ -115,7 +115,17 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 .data-mgmt{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
 .data-mgmt button{padding:10px 18px;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:.85em;transition:all .2s}
 .btn-export{background:#3498db;color:#fff}.btn-import{background:#2ecc71;color:#fff}.btn-data-reset{background:#e74c3c;color:#fff}
-@media(max-width:600px){.card-formula{font-size:1em}.card-wrapper{min-height:260px}.card-front,.card-back{min-height:260px;padding:16px}.nav button{padding:6px 10px;font-size:.75em}.problem-card{padding:14px}.pattern-card{padding:12px}}
+.resume-banner{background:linear-gradient(135deg,#4a00e0,#8e2de2);border-radius:12px;padding:18px 20px;margin:12px 0;display:flex;align-items:center;gap:16px;box-shadow:0 4px 16px rgba(74,0,224,.2);color:#fff;flex-wrap:wrap}
+.resume-banner .resume-icon{font-size:2em;min-width:44px;text-align:center}
+.resume-banner .resume-info{flex:1;min-width:180px}
+.resume-banner .resume-title{font-weight:700;font-size:1em;margin-bottom:4px}
+.resume-banner .resume-desc{font-size:.85em;opacity:.9}
+.resume-banner .resume-time{font-size:.75em;opacity:.7;margin-top:2px}
+.resume-banner .resume-actions{display:flex;gap:8px;flex-wrap:wrap}
+.resume-banner .btn-resume{padding:10px 20px;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:.88em;transition:all .2s}
+.resume-banner .btn-resume-go{background:#fff;color:#4a00e0}.resume-banner .btn-resume-go:hover{background:#f0e6ff}
+.resume-banner .btn-resume-skip{background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4)}.resume-banner .btn-resume-skip:hover{background:rgba(255,255,255,.3)}
+@media(max-width:600px){.card-formula{font-size:1em}.card-wrapper{min-height:260px}.card-front,.card-back{min-height:260px;padding:16px}.nav button{padding:6px 10px;font-size:.75em}.problem-card{padding:14px}.pattern-card{padding:12px}.resume-banner{padding:14px}}
 </style>
 </head>
 <body>
@@ -132,6 +142,18 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 <div class="container">
 <!-- Dashboard -->
 <div id="sec-dashboard" class="section active">
+<div id="resume-prompt" class="resume-banner" style="display:none">
+<div class="resume-icon">&#9654;&#65039;</div>
+<div class="resume-info">
+<div class="resume-title">前回の続きから始めますか？</div>
+<div class="resume-desc" id="resume-desc"></div>
+<div class="resume-time" id="resume-time"></div>
+</div>
+<div class="resume-actions">
+<button class="btn-resume btn-resume-go" onclick="resumeLastSession()">続きから</button>
+<button class="btn-resume btn-resume-skip" onclick="dismissResume()">最初から</button>
+</div>
+</div>
 <div id="review-banner" class="review-banner" onclick="startReviewMode()">
 <div class="review-count" id="review-count">0</div>
 <div class="review-text" id="review-text">今日の復習公式 — タップして復習開始</div>
@@ -1139,6 +1161,7 @@ function renderCard(){
   document.getElementById('card-back').innerHTML='<span class="card-status-badge '+bc+'">'+bt+'</span><span class="card-chapter-badge">'+chN+'</span><div class="card-title">'+f.title+'</div><div class="card-formula">'+f.back.replace(/\n/g,'<br>')+'</div><div class="card-note">'+f.note+'</div>';
   document.getElementById('card-counter').textContent=(currentCardIndex+1)+' / '+filteredFormulas.length;
   setTimeout(()=>{renderMath(document.getElementById('card-front'));renderMath(document.getElementById('card-back'));},10);
+  saveCardSession();
 }
 function flipCard(){document.getElementById('card-wrapper').classList.toggle('flipped');}
 function nextCard(){if(!filteredFormulas.length)return;currentCardIndex=(currentCardIndex+1)%filteredFormulas.length;renderCard();}
@@ -1158,6 +1181,7 @@ function filterProblems(){
     return true;
   });
   renderProblems();
+  saveProblemSession();
 }
 function renderProblems(){
   const c=document.getElementById('prob-container');c.innerHTML='';
@@ -1199,6 +1223,7 @@ function startQuiz(){
   pool=pool.slice(0,cnt);
   quizState={questions:pool,current:0,correct:0,wrong:0,answered:false};
   renderQuizQ();
+  saveQuizSession();
 }
 function renderQuizQ(){
   const a=document.getElementById('quiz-area');
@@ -1219,6 +1244,7 @@ function answerQuiz(idx){
   if(ok)quizState.correct++;else quizState.wrong++;
   if(q.formulaId){updateSRS(q.formulaId,ok);}
   recordStudy();
+  saveQuizSession();
   document.querySelectorAll('.quiz-option').forEach((el,i)=>{el.classList.add('disabled');if(i===q.answer)el.classList.add('correct');if(i===idx&&!ok)el.classList.add('wrong');});
   const ra=document.getElementById('qr-area');
   const nxt=quizState.current+1<quizState.questions.length?'次の問題 →':'結果を見る';
@@ -1253,6 +1279,7 @@ function filterPatterns(){
       +'</div></div>';
   });
   setTimeout(()=>renderMath(c),10);
+  savePatternSession();
 }
 function markPat(pid,status){spts(pid,status);filterPatterns();}
 
@@ -1287,9 +1314,117 @@ document.addEventListener('keydown',e=>{
   }
 });
 
+// ====== LAST SESSION TRACKING ======
+const SESSION_KEY='math1_last_session';
+function saveLastSession(data){
+  data.timestamp=Date.now();
+  localStorage.setItem(SESSION_KEY,JSON.stringify(data));
+}
+function getLastSession(){
+  try{return JSON.parse(localStorage.getItem(SESSION_KEY));}catch(e){return null;}
+}
+function clearLastSession(){localStorage.removeItem(SESSION_KEY);}
+
+function saveCardSession(){
+  if(!filteredFormulas.length)return;
+  const chVal=document.getElementById('cf-ch').value;
+  const stVal=document.getElementById('cf-st').value;
+  const chLabel=chVal==='all'?'全章':CH_NAMES[chVal]||chVal;
+  const stLabel={all:'すべて',new:'未学習',learning:'学習中',known:'覚えた'}[stVal]||stVal;
+  const desc='公式カード '+chLabel+(stVal!=='all'?' ('+stLabel+')':'')+' - '+(currentCardIndex+1)+'/'+filteredFormulas.length+'枚目';
+  saveLastSession({section:'cards',cardIndex:currentCardIndex,filters:{ch:chVal,st:stVal},description:desc});
+}
+function saveProblemSession(){
+  const chVal=document.getElementById('pf-ch').value;
+  const dfVal=document.getElementById('pf-df').value;
+  const stVal=document.getElementById('pf-st').value;
+  const chLabel=chVal==='all'?'全章':CH_NAMES[chVal]||chVal;
+  const dfLabel={all:'すべて',basic:'基本',standard:'標準',advanced:'応用'}[dfVal]||dfVal;
+  const stLabel={all:'すべて',new:'未着手',solved:'正解済',review:'要復習'}[stVal]||stVal;
+  let parts=[chLabel];
+  if(dfVal!=='all')parts.push(dfLabel);
+  if(stVal!=='all')parts.push(stLabel);
+  const scrollPos=window.scrollY;
+  const desc='問題演習 '+parts.join(' ');
+  saveLastSession({section:'problems',filters:{ch:chVal,df:dfVal,st:stVal},scrollPos:scrollPos,description:desc});
+}
+function saveQuizSession(){
+  if(!quizState||quizState.current>=quizState.questions.length)return;
+  const desc='クイズ - '+(quizState.current+1)+'問目 (正解:'+quizState.correct+' 不正解:'+quizState.wrong+')';
+  saveLastSession({section:'quiz',quizIndex:quizState.current,description:desc});
+}
+function savePatternSession(){
+  const chVal=document.getElementById('ptf-ch').value;
+  const stVal=document.getElementById('ptf-st').value;
+  const chLabel=chVal==='all'?'全章':CH_NAMES[chVal]||chVal;
+  const stLabel={all:'すべて',new:'未学習',learning:'学習中',known:'習得済み'}[stVal]||stVal;
+  const desc='解法パターン '+chLabel+(stVal!=='all'?' ('+stLabel+')':'');
+  saveLastSession({section:'patterns',filters:{ch:chVal,st:stVal},description:desc});
+}
+
+function showResumePrompt(){
+  const session=getLastSession();
+  const el=document.getElementById('resume-prompt');
+  if(!session||!session.section){el.style.display='none';return;}
+  document.getElementById('resume-desc').textContent=session.description||'';
+  const ago=session.timestamp?formatTimeAgo(session.timestamp):'';
+  document.getElementById('resume-time').textContent=ago?ago:'';
+  el.style.display='flex';
+}
+function formatTimeAgo(ts){
+  const diff=Date.now()-ts;
+  const min=Math.floor(diff/60000);
+  if(min<1)return 'たった今';
+  if(min<60)return min+'分前';
+  const hr=Math.floor(min/60);
+  if(hr<24)return hr+'時間前';
+  const d=Math.floor(hr/24);
+  return d+'日前';
+}
+function resumeLastSession(){
+  const session=getLastSession();
+  if(!session)return;
+  const btns=document.querySelectorAll('.nav button');
+  const secMap={cards:1,problems:2,quiz:3,patterns:4};
+  const idx=secMap[session.section];
+  if(idx===undefined)return;
+  document.getElementById('resume-prompt').style.display='none';
+  if(session.section==='cards'){
+    if(session.filters){
+      document.getElementById('cf-ch').value=session.filters.ch||'all';
+      document.getElementById('cf-st').value=session.filters.st||'all';
+    }
+    showSection('cards',btns[idx]);
+    if(typeof session.cardIndex==='number'&&session.cardIndex<filteredFormulas.length){
+      currentCardIndex=session.cardIndex;renderCard();
+    }
+  }else if(session.section==='problems'){
+    if(session.filters){
+      document.getElementById('pf-ch').value=session.filters.ch||'all';
+      document.getElementById('pf-df').value=session.filters.df||'all';
+      document.getElementById('pf-st').value=session.filters.st||'all';
+    }
+    showSection('problems',btns[idx]);
+    if(session.scrollPos){setTimeout(()=>window.scrollTo(0,session.scrollPos),100);}
+  }else if(session.section==='quiz'){
+    showSection('quiz',btns[idx]);
+  }else if(session.section==='patterns'){
+    if(session.filters){
+      document.getElementById('ptf-ch').value=session.filters.ch||'all';
+      document.getElementById('ptf-st').value=session.filters.st||'all';
+    }
+    showSection('patterns',btns[idx]);
+  }
+}
+function dismissResume(){
+  clearLastSession();
+  document.getElementById('resume-prompt').style.display='none';
+}
+
 // ====== INIT ======
 checkStreak();
 updateDashboard();
+showResumePrompt();
 </script>
 </body>
 </html>

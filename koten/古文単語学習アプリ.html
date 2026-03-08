@@ -710,6 +710,70 @@ tr:hover td { background: #f5efe5; }
   display: none;
 }
 
+/* ===== Resume Session Banner ===== */
+.resume-banner {
+  background: linear-gradient(135deg, #4a6cf7, #7b5ea7);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  color: white;
+  box-shadow: 0 4px 16px rgba(74, 108, 247, 0.3);
+  animation: resumeSlideIn 0.4s ease-out;
+}
+
+@keyframes resumeSlideIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.resume-banner .resume-title {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.resume-banner .resume-desc {
+  font-size: 0.88em;
+  opacity: 0.9;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.resume-banner .resume-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.resume-banner .btn-resume {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.92em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resume-banner .btn-resume-continue {
+  background: white;
+  color: #4a6cf7;
+}
+
+.resume-banner .btn-resume-continue:hover {
+  background: #e8ecff;
+}
+
+.resume-banner .btn-resume-dismiss {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+.resume-banner .btn-resume-dismiss:hover {
+  background: rgba(255,255,255,0.3);
+}
+
 @media (max-width: 600px) {
   .quiz-choices { grid-template-columns: 1fr; }
   .flashcard .word { font-size: 1.8em; }
@@ -737,6 +801,14 @@ tr:hover td { background: #f5efe5; }
 
   <!-- ===== DASHBOARD ===== -->
   <div id="dashboard" class="section active">
+    <div class="resume-banner" id="resume-banner" style="display:none;">
+      <div class="resume-title">前回の続きから始めますか？</div>
+      <div class="resume-desc" id="resume-desc"></div>
+      <div class="resume-buttons">
+        <button class="btn-resume btn-resume-continue" onclick="resumeSession()">続きから</button>
+        <button class="btn-resume btn-resume-dismiss" onclick="dismissSession()">最初から</button>
+      </div>
+    </div>
     <div class="review-banner" id="review-banner" onclick="startReviewMode()">
       <div class="review-count" id="review-count">0</div>
       <div class="review-label" id="review-label">今日の復習単語 &#8212; タップして復習開始</div>
@@ -1283,6 +1355,8 @@ function resetAllData() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(SRS_KEY);
   localStorage.removeItem(STREAK_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  document.getElementById("resume-banner").style.display = "none";
   updateDashboard();
   renderTable();
   renderFC();
@@ -1296,7 +1370,7 @@ function showSection(id) {
   event.target.classList.add("active");
   if (id === "dashboard") updateDashboard();
   if (id === "flashcard") initFlashcards();
-  if (id === "reference") { renderTable(); }
+  if (id === "reference") { renderTable(); saveReferenceSession(); }
 }
 
 // ===== DASHBOARD =====
@@ -1427,6 +1501,9 @@ function renderFC() {
   document.getElementById("fc-btn-unknown").style.opacity = ws === "unknown" ? 1 : 0.4;
   document.getElementById("fc-btn-learning").style.opacity = ws === "learning" ? 1 : 0.4;
   document.getElementById("fc-btn-known").style.opacity = ws === "known" ? 1 : 0.4;
+
+  // Save session
+  saveFlashcardSession();
 }
 
 function toggleFC() {
@@ -1554,6 +1631,9 @@ function answerQuiz(btn, selected, correct, q) {
   }
 
   document.getElementById("q-next").className = "quiz-next show";
+
+  // Save session
+  saveQuizSession();
 }
 
 function nextQuiz() {
@@ -1672,6 +1752,120 @@ function cycleStatus(no, el) {
   el.className = `status-dot ${next}`;
 }
 
+// ===== SESSION TRACKING =====
+const SESSION_KEY = "kobun_tango_last_session";
+
+function saveSession(data) {
+  data.timestamp = Date.now();
+  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+}
+
+function loadSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY));
+  } catch { return null; }
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+function saveFlashcardSession() {
+  if (!fcCards.length) return;
+  const ch = document.getElementById("fc-chapter").value;
+  const star = document.getElementById("fc-star").value;
+  const st = document.getElementById("fc-status").value;
+  const chLabel = ch === "all" ? "全章" : ch;
+  const desc = `フラッシュカード ${chLabel} - ${fcIdx + 1}/${fcCards.length}枚目`;
+  saveSession({
+    section: "flashcard",
+    cardIndex: fcIdx,
+    filters: { chapter: ch, star: star, status: st },
+    description: desc
+  });
+}
+
+function saveQuizSession() {
+  if (!quizQs.length) return;
+  const chapters = Array.from(document.querySelectorAll("#quiz-setup .quiz-options input:checked")).map(c => c.value);
+  const mode = quizQs[0] ? quizQs[0].mode : "word-to-meaning";
+  const chLabel = chapters.length === 3 ? "全章" : chapters.join("・");
+  const desc = `クイズ ${chLabel} - ${quizIdx + 1}問目/${quizQs.length}問`;
+  saveSession({
+    section: "quiz",
+    quizIndex: quizIdx,
+    quizData: { chapters, mode, score: quizScore, mistakes: quizMistakes, questions: quizQs },
+    description: desc
+  });
+}
+
+function saveReferenceSession() {
+  saveSession({
+    section: "reference",
+    description: "単語一覧を閲覧中"
+  });
+}
+
+function showResumeBanner() {
+  const session = loadSession();
+  if (!session) return;
+  // Don't show if session is older than 7 days
+  if (Date.now() - session.timestamp > 7 * 24 * 60 * 60 * 1000) {
+    clearSession();
+    return;
+  }
+  const banner = document.getElementById("resume-banner");
+  const descEl = document.getElementById("resume-desc");
+  descEl.textContent = session.description;
+  banner.style.display = "block";
+}
+
+function resumeSession() {
+  const session = loadSession();
+  if (!session) return;
+  document.getElementById("resume-banner").style.display = "none";
+
+  // Navigate to section
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+
+  if (session.section === "flashcard") {
+    document.getElementById("flashcard").classList.add("active");
+    document.querySelectorAll(".nav button")[1].classList.add("active");
+    // Restore filters
+    if (session.filters) {
+      document.getElementById("fc-chapter").value = session.filters.chapter || "all";
+      document.getElementById("fc-star").value = session.filters.star || "all";
+      document.getElementById("fc-status").value = session.filters.status || "all";
+    }
+    fcCards = getFilteredWords();
+    fcIdx = Math.min(session.cardIndex || 0, Math.max(fcCards.length - 1, 0));
+    renderFC();
+  } else if (session.section === "quiz") {
+    document.getElementById("quiz").classList.add("active");
+    document.querySelectorAll(".nav button")[2].classList.add("active");
+    if (session.quizData && session.quizData.questions && session.quizData.questions.length) {
+      quizQs = session.quizData.questions;
+      quizIdx = session.quizIndex || 0;
+      quizScore = session.quizData.score || 0;
+      quizMistakes = session.quizData.mistakes || [];
+      document.getElementById("quiz-setup").style.display = "none";
+      document.getElementById("quiz-area").style.display = "block";
+      document.getElementById("quiz-result").style.display = "none";
+      renderQuiz();
+    }
+  } else if (session.section === "reference") {
+    document.getElementById("reference").classList.add("active");
+    document.querySelectorAll(".nav button")[3].classList.add("active");
+    renderTable();
+  }
+}
+
+function dismissSession() {
+  clearSession();
+  document.getElementById("resume-banner").style.display = "none";
+}
+
 // ===== KEYBOARD =====
 document.addEventListener("keydown", e => {
   if (document.getElementById("flashcard").classList.contains("active")) {
@@ -1688,6 +1882,7 @@ document.addEventListener("keydown", e => {
 checkStreak();
 updateDashboard();
 renderTable();
+showResumeBanner();
 </script>
 
 </body>
