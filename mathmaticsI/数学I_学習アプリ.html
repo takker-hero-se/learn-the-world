@@ -565,6 +565,63 @@ a:"(1) $a^2+b^2 = (a+b)^2-2ab = 12-4 = 8$\n(2) $S = \\frac{1}{2}ab\\sin C = \\fr
 {id:88,ch:"chX",unit:"u3c",diff:"advanced",pat:"P3-20",
 q:"$y=x^2-2(a+1)x+2a+1$ の $x$ 軸との交点がともに1より大きくなる $a$ の範囲を求めよ。",
 a:"$f(x) = x^2-2(a+1)x+2a+1$\n$f(1) = 1-2(a+1)+2a+1 = 0$\n$x=1$ は常に解。もう一つの解を $\\beta$ とする。\n解と係数の関係: $1+\\beta = 2(a+1)$ → $\\beta = 2a+1$\n$\\beta > 1$ → $2a+1 > 1$ → $a > 0$"},
+
+// ── 追加問題：未カバーパターン・補強 ──
+// P2-3 ド・モルガンの法則
+{id:89,ch:"ch2",unit:"u2a",diff:"standard",pat:"P2-3",
+q:"$U = \\{1,2,3,4,5,6,7,8,9,10\\}$, $A = \\{1,3,5,7\\}$, $B = \\{3,5,8,10\\}$ のとき、ド・モルガンの法則を確認せよ。\n(1) $\\overline{A \\cup B}$ と $\\bar{A} \\cap \\bar{B}$\n(2) $\\overline{A \\cap B}$ と $\\bar{A} \\cup \\bar{B}$",
+a:"$\\bar{A} = \\{2,4,6,8,9,10\\},\\ \\bar{B} = \\{1,2,4,6,7,9\\}$\n(1) $A \\cup B = \\{1,3,5,7,8,10\\}$ → $\\overline{A \\cup B} = \\{2,4,6,9\\}$\n$\\bar{A} \\cap \\bar{B} = \\{2,4,6,9\\}$ → 一致 ✓\n(2) $A \\cap B = \\{3,5\\}$ → $\\overline{A \\cap B} = \\{1,2,4,6,7,8,9,10\\}$\n$\\bar{A} \\cup \\bar{B} = \\{1,2,4,6,7,8,9,10\\}$ → 一致 ✓"},
+{id:90,ch:"ch2",unit:"u2a",diff:"advanced",pat:"P2-3",
+q:"$n(U)=50,\\ n(A)=30,\\ n(B)=25,\\ n(A \\cap B)=10$ のとき\n(1) $n(\\overline{A \\cup B})$\n(2) $n(\\bar{A} \\cap \\bar{B})$\n(3) $n(\\bar{A} \\cup \\bar{B})$",
+a:"$n(A \\cup B) = 30+25-10 = 45$\n(1) $n(\\overline{A \\cup B}) = 50-45 = 5$\n(2) ド・モルガン: $\\bar{A} \\cap \\bar{B} = \\overline{A \\cup B}$ → $5$\n(3) $\\bar{A} \\cup \\bar{B} = \\overline{A \\cap B}$ → $n(\\overline{A \\cap B}) = 50-10 = 40$"},
+
+// P4-6 正弦定理 vs 余弦定理の使い分け
+{id:91,ch:"ch4",unit:"u4b",diff:"standard",pat:"P4-6",
+q:"次の条件でどちらの定理を使うべきか答え、実際に解け。\n(1) $A=40°, B=80°, a=10$ → 辺 $b$\n(2) $a=7, b=8, C=60°$ → 辺 $c$\n(3) $a=5, b=6, c=7$ → 角 $A$",
+a:"(1) 2角1辺 → 正弦定理\n$\\frac{10}{\\sin 40°} = \\frac{b}{\\sin 80°}$ → $b = \\frac{10\\sin 80°}{\\sin 40°} \\approx 15.3$\n(2) 2辺と挟む角 → 余弦定理\n$c^2 = 49+64-112\\cos 60° = 57$ → $c = \\sqrt{57}$\n(3) 3辺 → 余弦定理\n$\\cos A = \\frac{64+49-25}{84} = \\frac{88}{84} = \\frac{22}{21}$... 訂正: $\\frac{36+49-25}{2 \\cdot 6 \\cdot 7} = \\frac{60}{84} = \\frac{5}{7}$\n$A = \\cos^{-1}\\frac{5}{7} \\approx 44.4°$"},
+{id:92,ch:"ch4",unit:"u4b",diff:"advanced",pat:"P4-6",
+q:"$\\triangle ABC$ で $B=45°, b=\\sqrt{6}, c=2$ のとき、辺 $a$ と角 $C$ を求めよ。\nヒント: まず正弦定理で $C$ を求め、次に余弦定理で $a$ を求めよ。",
+a:"正弦定理: $\\frac{\\sqrt{6}}{\\sin 45°} = \\frac{2}{\\sin C}$\n$\\sin C = \\frac{2\\sin 45°}{\\sqrt{6}} = \\frac{2 \\cdot \\frac{\\sqrt{2}}{2}}{\\sqrt{6}} = \\frac{\\sqrt{2}}{\\sqrt{6}} = \\frac{1}{\\sqrt{3}}$\n$C = \\sin^{-1}\\frac{1}{\\sqrt{3}} \\approx 33.6°$ → $A \\approx 101.4°$\n余弦定理: $a^2 = 6+4-2\\sqrt{6} \\cdot 2 \\cos A$\nまたは正弦定理で $a = \\frac{\\sqrt{6}\\sin A}{\\sin 45°}$"},
+
+// u2a 補強（包除原理の応用）
+{id:93,ch:"ch2",unit:"u2a",diff:"advanced",pat:"P2-2",
+q:"100人に調査。数学好き55人、英語好き45人、理科好き40人。数学と英語20人、英語と理科15人、数学と理科18人、3科目すべて8人。\n(1) いずれか1科目以上が好きな人数\n(2) いずれの科目も好きでない人数",
+a:"包除原理:\n$n(A \\cup B \\cup C) = 55+45+40-20-15-18+8 = 95$\n(1) $95$ 人\n(2) $100-95 = 5$ 人"},
+
+// u2b 補強（必要十分条件の応用）
+{id:94,ch:"ch2",unit:"u2b",diff:"standard",pat:"P2-4",
+q:"整数 $n$ について、$p$ は $q$ の何条件か。\n(1) $p$: $n$は4の倍数、$q$: $n$は偶数\n(2) $p$: $n^2 > 9$、$q$: $n > 3$\n(3) $p$: $|n| < 2$、$q$: $-2 < n < 2$",
+a:"(1) $p \\Rightarrow q$ 真、$q \\Rightarrow p$ 偽（反例: $n=2$）→ 十分条件\n(2) $p \\Rightarrow q$ 偽（反例: $n=-4$）、$q \\Rightarrow p$ 真 → 必要条件\n(3) 整数条件のもとで $|n|<2$ ⟺ $n = -1,0,1$ ⟺ $-2<n<2$ → 必要十分条件"},
+
+// u3b 補強（最大値の場合分け）
+{id:95,ch:"ch3",unit:"u3b",diff:"advanced",pat:"P3-6",
+q:"$y=-x^2+4ax$（$0 \\leq x \\leq 3$）の最大値を $a$ で場合分けして求めよ。",
+a:"$y = -(x-2a)^2+4a^2$、軸 $x=2a$、上に凸\n(i) $2a < 0$（$a<0$）: 最大値 $f(0) = 0$\n(ii) $0 \\leq 2a \\leq 3$（$0 \\leq a \\leq \\frac{3}{2}$）: 最大値 $4a^2$（頂点）\n(iii) $2a > 3$（$a > \\frac{3}{2}$）: 最大値 $f(3) = -9+12a = 12a-9$"},
+
+// u4a 補強（三角比の相互関係の応用）
+{id:96,ch:"ch4",unit:"u4a",diff:"advanced",pat:"P4-2, P4-3",
+q:"$0° < \\theta < 180°$ のとき、$\\sin\\theta + \\cos\\theta = \\frac{1}{2}$ ならば\n(1) $\\sin\\theta\\cos\\theta$ の値\n(2) $\\sin\\theta - \\cos\\theta$ の値\n(3) $\\sin^3\\theta + \\cos^3\\theta$ の値",
+a:"(1) 両辺2乗: $1+2\\sin\\theta\\cos\\theta = \\frac{1}{4}$ → $\\sin\\theta\\cos\\theta = -\\frac{3}{8}$\n(2) $(\\sin\\theta-\\cos\\theta)^2 = 1-2\\sin\\theta\\cos\\theta = 1+\\frac{3}{4} = \\frac{7}{4}$\n$0°<\\theta<180°$ で $\\sin\\theta+\\cos\\theta=\\frac{1}{2}>0$ かつ $\\sin\\theta\\cos\\theta<0$ → $\\cos\\theta<0$ → $\\sin\\theta>\\cos\\theta$\n$\\sin\\theta-\\cos\\theta = \\frac{\\sqrt{7}}{2}$\n(3) $(\\sin\\theta+\\cos\\theta)(\\sin^2\\theta-\\sin\\theta\\cos\\theta+\\cos^2\\theta) = \\frac{1}{2}(1+\\frac{3}{8}) = \\frac{11}{16}$"},
+
+// u3c 補強（連立2次不等式）
+{id:97,ch:"ch3",unit:"u3c",diff:"standard",pat:"P3-17",
+q:"次の連立不等式を解け。\n(1) $\\begin{cases} x^2 - 3x - 4 \\leq 0 \\\\ x^2 - x - 6 > 0 \\end{cases}$\n(2) $\\begin{cases} x^2 - 9 < 0 \\\\ x^2 + x - 2 \\geq 0 \\end{cases}$",
+a:"(1) ① $(x-4)(x+1) \\leq 0$ → $-1 \\leq x \\leq 4$\n② $(x-3)(x+2) > 0$ → $x<-2$ または $x>3$\n共通: $3 < x \\leq 4$\n(2) ① $(x+3)(x-3) < 0$ → $-3 < x < 3$\n② $(x+2)(x-1) \\geq 0$ → $x \\leq -2$ または $x \\geq 1$\n共通: $-3 < x \\leq -2$ または $1 \\leq x < 3$"},
+
+// u3c 補強（グラフとx軸の位置関係）
+{id:98,ch:"ch3",unit:"u3c",diff:"standard",pat:"P3-12",
+q:"$y = x^2 + 2(m-1)x + m^2$ について\n(1) $x$ 軸と接するとき $m$ の値\n(2) $x$ 軸と異なる2点で交わるとき $m$ の範囲\n(3) $x$ 軸と共有点をもたないとき $m$ の範囲",
+a:"$D/4 = (m-1)^2 - m^2 = -2m+1$\n(1) $D = 0$: $-2m+1=0$ → $m = \\frac{1}{2}$\n(2) $D > 0$: $-2m+1>0$ → $m < \\frac{1}{2}$\n(3) $D < 0$: $m > \\frac{1}{2}$"},
+
+// u5a 補強（分散の計算）
+{id:99,ch:"ch5",unit:"u5a",diff:"advanced",pat:"P5-3, P5-4",
+q:"2つのクラスの数学のテスト結果:\nA組(20人): 平均65点, 分散100\nB組(30人): 平均75点, 分散144\n(1) 全体の平均\n(2) 全体の分散",
+a:"(1) $\\bar{x} = \\frac{20 \\times 65 + 30 \\times 75}{50} = \\frac{1300+2250}{50} = 71$\n(2) A組: $\\overline{x^2} = 100 + 65^2 = 4325$\nB組: $\\overline{x^2} = 144 + 75^2 = 5769$\n全体: $\\overline{x^2} = \\frac{20 \\times 4325 + 30 \\times 5769}{50} = \\frac{86500+173070}{50} = 5191.4$\n分散 $= 5191.4 - 71^2 = 5191.4 - 5041 = 150.4$"},
+
+// u5b 補強（仮説検定）
+{id:100,ch:"ch5",unit:"u5b",diff:"advanced",pat:"P5-8",
+q:"コインを100回投げたら表が62回出た。このコインは公正（表の確率50%）といえるか、仮説検定の考え方で説明せよ。",
+a:"$H_0$: コインは公正（$p=0.5$）\n期待値: $np = 50$、標準偏差: $\\sqrt{np(1-p)} = \\sqrt{25} = 5$\n$z = \\frac{62-50}{5} = 2.4$\n有意水準5%の場合 $z > 1.96$ なので $H_0$ を棄却。\n「このコインは公正でない（表が出やすい）」と判断する。"}
 ];
 
 // ====== QUIZ (30 questions) ======
