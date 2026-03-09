@@ -137,6 +137,7 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 <button onclick="showSection('problems',this)">問題演習</button>
 <button onclick="showSection('quiz',this)">クイズ</button>
 <button onclick="showSection('patterns',this)">解法パターン</button>
+<a href="解法パターンアニメーション.html" style="padding:8px 16px;border:2px solid #e67e22;background:#fff;color:#e67e22;border-radius:20px;cursor:pointer;font-size:.85em;font-weight:600;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:4px" onmouseover="this.style.background='#e67e22';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#e67e22'">&#9654; アニメーション解説</a>
 <button onclick="showSection('settings',this)">設定</button>
 </div>
 <div class="container">
@@ -230,6 +231,7 @@ header h1{font-size:1.5em}header p{font-size:.8em;opacity:.85;margin-top:4px}
 </div>
 <!-- Patterns -->
 <div id="sec-patterns" class="section">
+<a href="解法パターンアニメーション.html" style="display:block;text-align:center;margin:12px 0;padding:14px 24px;background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;border-radius:12px;text-decoration:none;font-weight:700;font-size:1em;box-shadow:0 2px 10px rgba(230,126,34,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(230,126,34,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(230,126,34,.3)'">&#9654; アニメーション解説で視覚的に理解する</a>
 <div class="filter-bar"><label>単元:</label><select id="ptf-unit" onchange="filterPatterns()"><option value="all">全単元</option><optgroup label="第1章 数と式"><option value="u1a">式の展開と因数分解</option><option value="u1b">実数と根号</option><option value="u1c">1次不等式</option></optgroup><optgroup label="第2章 集合と命題"><option value="u2a">集合</option><option value="u2b">命題と証明</option></optgroup><optgroup label="第3章 2次関数"><option value="u3a">2次関数とグラフ</option><option value="u3b">最大値・最小値</option><option value="u3c">2次方程式と2次不等式</option></optgroup><optgroup label="第4章 図形と計量"><option value="u4a">三角比</option><option value="u4b">正弦定理と余弦定理</option><option value="u4c">図形の計量</option></optgroup><optgroup label="第5章 データの分析"><option value="u5a">代表値と散らばり</option><option value="u5b">相関と分析</option></optgroup></select>
 <label>状態:</label><select id="ptf-st" onchange="filterPatterns()"><option value="all">すべて</option><option value="new">未学習</option><option value="learning">学習中</option><option value="known">習得済み</option></select></div>
 <div id="pat-container"></div>

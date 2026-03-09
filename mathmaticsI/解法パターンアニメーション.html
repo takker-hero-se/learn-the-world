@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数学I 解法パターン アニメーション解説</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<style>
+:root{--primary:#1a5276;--primary-light:#2980b9;--accent:#e67e22;--bg:#f0f4f8;--card-bg:#fff;--text:#2c3e50;--text-light:#7f8c8d;--border:#dcdde1;--green:#27ae60;--red:#e74c3c;--blue:#3498db}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','Hiragino Kaku Gothic ProN',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:linear-gradient(135deg,#1a3c6e,#2980b9);color:#fff;padding:18px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+header h1{font-size:1.5em}
+header p{font-size:.8em;opacity:.85;margin-top:4px}
+.back-link{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#fff;text-decoration:none;font-size:.9em;opacity:.8}
+.back-link:hover{opacity:1}
+header{position:relative}
+
+.container{max-width:900px;margin:0 auto;padding:16px}
+
+/* Pattern selector - compact bar */
+.selector-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0;padding:12px 16px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.selector-bar label{font-weight:700;font-size:.85em;color:var(--primary);white-space:nowrap}
+.selector-bar select{padding:8px 12px;border:2px solid var(--border);border-radius:10px;font-size:.9em;font-weight:600;color:var(--text);background:#fff;cursor:pointer;flex:1;min-width:0;max-width:320px}
+.selector-bar select:focus{border-color:var(--primary-light);outline:none}
+.selector-nav{display:flex;gap:6px}
+.selector-nav button{padding:6px 14px;border:2px solid var(--primary);background:#fff;color:var(--primary);border-radius:8px;cursor:pointer;font-size:.8em;font-weight:700;transition:all .2s}
+.selector-nav button:hover{background:var(--primary);color:#fff}
+
+/* Animation area */
+.anim-container{background:#fff;border-radius:20px;padding:28px;margin:12px 0 80px 0;box-shadow:0 4px 24px rgba(0,0,0,.1);min-height:350px;position:relative;overflow:hidden}
+.anim-title{font-size:1.3em;font-weight:700;color:var(--primary);text-align:center;margin-bottom:8px}
+.anim-when{text-align:center;font-size:.88em;color:var(--text-light);margin-bottom:20px;padding:8px 16px;background:#f8f9fa;border-radius:10px;display:inline-block;width:100%}
+
+/* Fixed bottom nav */
+.fixed-bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);box-shadow:0 -2px 12px rgba(0,0,0,.1);padding:10px 16px;display:flex;justify-content:center;align-items:center;gap:16px;z-index:100}
+.fixed-bottom-nav button{padding:10px 28px;border:none;border-radius:12px;cursor:pointer;font-size:.95em;font-weight:600;transition:all .2s}
+.fixed-bottom-nav .step-indicator{font-size:.9em;color:var(--text-light);min-width:90px;text-align:center}
+.fixed-bottom-nav .btn-replay{padding:10px 16px;font-size:.85em}
+
+/* Speech controls */
+.speech-controls{display:flex;align-items:center;gap:8px;margin-left:12px;padding-left:12px;border-left:1px solid var(--border)}
+.btn-speech{padding:8px 14px;border:2px solid var(--primary-light);background:#fff;color:var(--primary-light);border-radius:10px;cursor:pointer;font-size:.85em;font-weight:600;transition:all .2s;display:flex;align-items:center;gap:4px}
+.btn-speech:hover{background:var(--primary-light);color:#fff}
+.btn-speech.active{background:var(--primary-light);color:#fff}
+.btn-speech.speaking{animation:pulse-speak .8s infinite alternate}
+@keyframes pulse-speak{from{box-shadow:0 0 0 0 rgba(41,128,185,.4)}to{box-shadow:0 0 0 8px rgba(41,128,185,0)}}
+.btn-autoplay{padding:8px 14px;border:2px solid var(--green);background:#fff;color:var(--green);border-radius:10px;cursor:pointer;font-size:.85em;font-weight:600;transition:all .2s;display:flex;align-items:center;gap:4px}
+.btn-autoplay:hover{background:var(--green);color:#fff}
+.btn-autoplay.active{background:var(--green);color:#fff;animation:pulse-auto .8s infinite alternate}
+@keyframes pulse-auto{from{box-shadow:0 0 0 0 rgba(39,174,96,.4)}to{box-shadow:0 0 0 8px rgba(39,174,96,0)}}
+.speed-select{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.8em;cursor:pointer}
+
+/* Steps */
+.step-container{position:relative;min-height:250px}
+.step{opacity:0;transform:translateY(20px);transition:all .5s ease;position:absolute;width:100%;top:0;left:0;pointer-events:none}
+.step.active{opacity:1;transform:translateY(0);pointer-events:auto;position:relative}
+.step-label{display:inline-block;background:var(--accent);color:#fff;padding:4px 14px;border-radius:12px;font-size:.82em;font-weight:700;margin-bottom:12px}
+.step-content{font-size:1.05em;line-height:2;padding:8px 0}
+.step-note{font-size:.85em;color:var(--text-light);margin-top:10px;padding:10px 14px;background:#fef9e7;border-radius:8px;border-left:3px solid var(--accent)}
+
+/* Math highlight animation */
+.math-line{margin:8px 0;padding:12px 16px;border-radius:10px;transition:all .4s ease}
+.math-line.highlight{background:linear-gradient(135deg,#eaf2f8,#d4e6f6);border-left:4px solid var(--primary-light)}
+.math-line.result{background:linear-gradient(135deg,#e8f8f0,#d0f0e0);border-left:4px solid var(--green)}
+.math-line.warn{background:linear-gradient(135deg,#fef9e7,#fdebd0);border-left:4px solid var(--accent)}
+
+/* Canvas for graphs */
+.graph-canvas{display:block;margin:12px auto;border-radius:12px;background:#fafbfc;border:1px solid var(--border)}
+
+/* Navigation (inside card - hidden, moved to fixed bar) */
+.btn-prev{background:#ecf0f1;color:var(--text)}.btn-prev:hover{background:#d5dbdb}
+.btn-next{background:var(--accent);color:#fff}.btn-next:hover{background:#d35400}
+.btn-replay{background:var(--primary-light);color:#fff}.btn-replay:hover{background:var(--primary)}
+.btn-prev:disabled,.btn-next:disabled{opacity:.4;cursor:not-allowed}
+
+/* Tasuki-kake visual */
+.tasuki-grid{display:grid;grid-template-columns:60px 60px 80px;gap:4px;align-items:center;margin:12px auto;width:fit-content;font-size:1.1em;font-weight:600}
+.tasuki-grid .cell{padding:8px;text-align:center;border-radius:8px;transition:all .4s}
+.tasuki-grid .cell.hl-a{background:#eaf2f8;color:var(--primary)}
+.tasuki-grid .cell.hl-b{background:#fef9e7;color:var(--accent)}
+.tasuki-grid .cell.hl-ok{background:#e8f8f0;color:var(--green)}
+.tasuki-arrow{font-size:1.2em;color:var(--text-light)}
+
+/* Triangle SVG */
+.triangle-svg{display:block;margin:12px auto}
+
+/* Progress dots */
+.progress-dots{display:flex;justify-content:center;gap:6px;margin:12px 0}
+.dot{width:10px;height:10px;border-radius:50%;background:#ddd;transition:all .3s}
+.dot.active{background:var(--accent);transform:scale(1.3)}
+.dot.done{background:var(--green)}
+
+/* Responsive */
+@media(max-width:600px){
+  .anim-container{padding:16px}
+  .anim-title{font-size:1.1em}
+  .step-content{font-size:.95em}
+  .selector-bar{flex-direction:column;gap:8px}
+  .selector-bar select{max-width:100%}
+  .fixed-bottom-nav{gap:6px;padding:8px 10px;flex-wrap:wrap}
+  .fixed-bottom-nav button{padding:8px 14px;font-size:.85em}
+  .fixed-bottom-nav .btn-replay{padding:8px 10px;font-size:.78em}
+  .speech-controls{margin-left:0;padding-left:0;border-left:none;padding-top:4px;border-top:1px solid var(--border);width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+<header>
+<a href="数学I_学習アプリ.html" class="back-link">← 学習アプリに戻る</a>
+<h1>解法パターン アニメーション解説</h1>
+<p>ステップごとに解法を視覚的に理解しよう</p>
+</header>
+
+<div class="container">
+<div class="selector-bar">
+  <label>パターン:</label>
+  <select id="pattern-select" onchange="loadPattern(this.value)">
+    <option value="">-- 選んでください --</option>
+  </select>
+  <div class="selector-nav">
+    <button onclick="prevPattern()" title="前のパターン">&#9664;</button>
+    <button onclick="nextPattern()" title="次のパターン">&#9654;</button>
+  </div>
+</div>
+
+<div class="anim-container" id="anim-area">
+  <div style="text-align:center;padding:60px 20px;color:var(--text-light)">
+    <p style="font-size:1.2em;margin-bottom:8px">上からパターンを選んでください</p>
+    <p style="font-size:.85em">ステップごとのアニメーション解説が始まります</p>
+  </div>
+</div>
+</div>
+
+<!-- Fixed bottom navigation -->
+<div class="fixed-bottom-nav" id="bottom-nav" style="display:none">
+  <button class="btn-replay" onclick="replayPattern()">最初から</button>
+  <button class="btn-prev" onclick="prevStep()" id="bn-prev" disabled>← 前へ</button>
+  <span class="step-indicator" id="bn-indicator">Step 1 / 1</span>
+  <button class="btn-next" onclick="nextStep()" id="bn-next">次へ →</button>
+  <div class="speech-controls">
+    <button class="btn-autoplay" id="btn-autoplay" onclick="toggleAutoPlay()" title="自動再生">&#9654; 自動再生</button>
+    <button class="btn-speech" id="btn-speech" onclick="toggleSpeech()" title="音声ON/OFF">&#128264; 音声</button>
+    <select class="speed-select" id="speech-speed" onchange="updateSpeechRate()" title="読み上げ速度">
+      <option value="0.8">遅め</option>
+      <option value="1" selected>普通</option>
+      <option value="1.3">速め</option>
+      <option value="1.6">高速</option>
+    </select>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Animation pattern definitions
+// Each pattern has: id, chapter, name, when, steps[]
+// Each step has: label, lines[] (each line has text and optional class)
+//   and optional: note, canvas (function to draw on canvas)
+// ============================================================
+const animPatterns = [
+
+// ===== CH1: 数と式 =====
+{
+  id:"P1-1", ch:"第1章", name:"展開（基本公式の適用）",
+  when:"2つの多項式の積を展開するとき",
+  example:"$(x+3)^2$ を展開せよ",
+  steps:[
+    {label:"問題の確認",lines:[
+      {text:"$(x+3)^2$ を展開する",cls:"highlight"},
+      {text:"使える公式を探そう"}
+    ],speech:"xたす3の2乗を展開します。使える公式を探しましょう。"},
+    {label:"公式の選択",lines:[
+      {text:"$(a+b)^2 = a^2 + 2ab + b^2$ を使う",cls:"highlight"},
+      {text:"ここで $a = x$、$b = 3$"}
+    ],speech:"aたすbの2乗イコールaの2乗たす2abたすbの2乗、という公式を使います。ここでaはx、bは3です。"},
+    {label:"公式に代入",lines:[
+      {text:"$(x+3)^2$"},
+      {text:"$= x^2 + 2 \\cdot x \\cdot 3 + 3^2$",cls:"highlight"}
+    ],speech:"公式に代入すると、x2乗たす2かけるxかける3たす3の2乗になります。"},
+    {label:"計算して完成",lines:[
+      {text:"$= x^2 + 6x + 9$",cls:"result"}
+    ],note:"式の形を見て、どの公式が使えるか判断することがポイント！",
+    speech:"計算すると、x2乗たす6xたす9になります。式の形を見て、どの公式が使えるか判断することがポイントです。"},
+  ]
+},
+
+{
+  id:"P1-3", ch:"第1章", name:"因数分解（共通因数のくくり出し）",
+  when:"すべての項に共通する因数があるとき",
+  example:"$6x^2 + 9x$ を因数分解せよ",
+  steps:[
+    {label:"問題の確認",lines:[
+      {text:"$6x^2 + 9x$ を因数分解する",cls:"highlight"},
+    ],speech:"6x2乗たす9xを因数分解します。"},
+    {label:"共通因数を見つける",lines:[
+      {text:"各項の係数: $6$ と $9$ → 最大公約数は $3$",cls:"highlight"},
+      {text:"各項の文字: $x^2$ と $x$ → 共通は $x$"},
+      {text:"共通因数は $3x$",cls:"warn"}
+    ],speech:"各項の係数6と9の最大公約数は3です。文字はx2乗とxで、共通はxです。よって共通因数は3xです。"},
+    {label:"くくり出す",lines:[
+      {text:"$6x^2 + 9x$"},
+      {text:"$= 3x \\cdot 2x + 3x \\cdot 3$",cls:"highlight"},
+      {text:"$= 3x(2x + 3)$",cls:"result"}
+    ],note:"因数分解の最初のステップとして、必ず共通因数がないかチェックしよう！",
+    speech:"3xでくくり出すと、3xかっこ2xたす3、となります。因数分解ではまず共通因数がないか必ずチェックしましょう。"}
+  ]
+},
+
+{
+  id:"P1-5", ch:"第1章", name:"因数分解（たすき掛け）",
+  when:"$x^2$ の係数が1でない2次式を因数分解するとき",
+  example:"$2x^2 + 7x + 3$ を因数分解せよ",
+  steps:[
+    {label:"問題の確認",lines:[
+      {text:"$2x^2 + 7x + 3$ を因数分解する",cls:"highlight"},
+      {text:"$x^2$ の係数が $2$ なので、たすき掛けを使う"}
+    ],speech:"2x2乗たす7xたす3を因数分解します。x2乗の係数が2なので、たすき掛けを使います。"},
+    {label:"係数の組を列挙",lines:[
+      {text:"$x^2$ の係数 $2$ の分解: $1 \\times 2$（または $2 \\times 1$）"},
+      {text:"定数項 $3$ の分解: $1 \\times 3$（または $3 \\times 1$）",cls:"highlight"}
+    ],speech:"x2乗の係数2は1かける2に分解できます。定数項3は1かける3に分解できます。"},
+    {label:"たすき掛けで確認", useTasuki:true,
+      tasukiData:{a1:1,a2:2,b1:1,b2:3,cross1:"1×3=3",cross2:"2×1=2",sum:"3+2=5"},
+      lines:[{text:"$1 \\times 3 + 2 \\times 1 = 5$ → $x$ の係数 $7$ と不一致"}],
+      speech:"たすき掛けで確認します。1かける3たす2かける1は5で、xの係数7と一致しません。"
+    },
+    {label:"組み合わせを変えて再チェック", useTasuki:true,
+      tasukiData:{a1:1,a2:2,b1:3,b2:1,cross1:"1×1=1",cross2:"2×3=6",sum:"1+6=7"},
+      lines:[
+        {text:"$1 \\times 1 + 2 \\times 3 = 7$ → $x$ の係数と一致！",cls:"result"}
+      ],speech:"組み合わせを変えます。1かける1たす2かける3は7で、xの係数と一致しました。"
+    },
+    {label:"因数分解の完成",lines:[
+      {text:"$(1 \\cdot x + 3)(2 \\cdot x + 1)$"},
+      {text:"$= (x + 3)(2x + 1)$",cls:"result"}
+    ],note:"たすき掛けは「掛けて定数項、たすき掛けの和が $x$ の係数」",
+    speech:"よって、かっこxたす3、かっこ2xたす1、と因数分解できます。"}
+  ]
+},
+
+{
+  id:"P1-8", ch:"第1章", name:"対称式の値",
+  when:"$a+b$ と $ab$ が与えられ、$a^2+b^2$ などの値を求めるとき",
+  example:"$a+b=5$, $ab=6$ のとき $a^2+b^2$ の値を求めよ",
+  steps:[
+    {label:"与えられた条件",lines:[
+      {text:"$a + b = 5$, $\\quad ab = 6$",cls:"highlight"},
+      {text:"求めるもの: $a^2 + b^2$"}
+    ],speech:"aたすbイコール5、aかけるbイコール6が与えられています。a2乗たすb2乗の値を求めます。"},
+    {label:"公式を思い出す",lines:[
+      {text:"$a^2 + b^2 = (a+b)^2 - 2ab$",cls:"highlight"},
+      {text:"$(a+b)^2$ を展開すると $a^2 + 2ab + b^2$"},
+      {text:"だから $a^2 + b^2 = (a+b)^2 - 2ab$"}
+    ],speech:"a2乗たすb2乗は、aたすbの2乗ひく2abという公式で表せます。"},
+    {label:"値を代入",lines:[
+      {text:"$a^2 + b^2 = (a+b)^2 - 2ab$"},
+      {text:"$= 5^2 - 2 \\times 6$",cls:"highlight"},
+      {text:"$= 25 - 12$"},
+      {text:"$= 13$",cls:"result"}
+    ],note:"対称式は必ず $a+b$ と $ab$ で表せる。まず公式を書き、それから代入する",
+    speech:"5の2乗ひく2かける6で、25ひく12イコール13です。対称式はaたすbとabで必ず表せるのがポイントです。"}
+  ]
+},
+
+// ===== CH2: 集合と命題 =====
+{
+  id:"P2-4", ch:"第2章", name:"必要条件・十分条件の判定",
+  when:"$p$ と $q$ の条件関係を判定するとき",
+  example:"$p$: $x=2$, $q$: $x^2=4$ の関係を調べよ",
+  steps:[
+    {label:"条件を確認",lines:[
+      {text:"$p$: $x = 2$"},
+      {text:"$q$: $x^2 = 4$（つまり $x = 2$ または $x = -2$）",cls:"highlight"}
+    ],speech:"条件pはxイコール2、条件qはx2乗イコール4、つまりxイコール2またはマイナス2です。"},
+    {label:"$p \\Rightarrow q$ を調べる",lines:[
+      {text:"$x = 2$ ならば $x^2 = 4$ は成り立つ？"},
+      {text:"$2^2 = 4$ ✓ → $p \\Rightarrow q$ は真",cls:"result"}
+    ],speech:"pならばqを調べます。xイコール2ならx2乗イコール4は成り立つので、pならばqは真です。"},
+    {label:"$q \\Rightarrow p$ を調べる",lines:[
+      {text:"$x^2 = 4$ ならば $x = 2$ は成り立つ？"},
+      {text:"$x = -2$ のとき $x^2 = 4$ だが $x \\neq 2$ → 反例あり！",cls:"warn"},
+      {text:"$q \\Rightarrow p$ は偽"}
+    ],speech:"次にqならばpを調べます。xイコールマイナス2のときx2乗は4ですが、xは2ではありません。反例があるので偽です。"},
+    {label:"結論",lines:[
+      {text:"$p \\Rightarrow q$: 真　$q \\Rightarrow p$: 偽"},
+      {text:"$p$ は $q$ であるための十分条件",cls:"result"},
+      {text:"（$p$ だけで $q$ が言えるので「十分」）"}
+    ],note:"「十分 → それだけでOK」「必要 → 最低限要る」と覚えよう",
+    speech:"pならばqは真、qならばpは偽なので、pはqであるための十分条件です。十分とは、それだけでOKという意味です。"}
+  ]
+},
+
+{
+  id:"P2-7", ch:"第2章", name:"背理法",
+  when:"結論を直接示しにくいとき",
+  example:"$\\sqrt{2}$ が無理数であることを証明せよ",
+  steps:[
+    {label:"結論を否定して仮定",lines:[
+      {text:"結論「$\\sqrt{2}$ は無理数」の否定:"},
+      {text:"$\\sqrt{2}$ は有理数、つまり $\\sqrt{2} = \\frac{p}{q}$（$p, q$ は互いに素な整数）と仮定する",cls:"highlight"}
+    ],speech:"背理法では、まず結論を否定します。ルート2は有理数である、つまりルート2イコールq分のpと仮定します。pとqは互いに素な整数とします。"},
+    {label:"論理を進める",lines:[
+      {text:"$\\sqrt{2} = \\frac{p}{q}$ の両辺を2乗すると"},
+      {text:"$2 = \\frac{p^2}{q^2}$ → $p^2 = 2q^2$",cls:"highlight"},
+      {text:"$p^2$ が偶数 → $p$ も偶数 → $p = 2m$ とおける"}
+    ],speech:"両辺を2乗するとp2乗イコール2q2乗となります。p2乗が偶数なのでpも偶数です。pイコール2mとおけます。"},
+    {label:"矛盾を導く",lines:[
+      {text:"$p = 2m$ を代入: $(2m)^2 = 2q^2$"},
+      {text:"$4m^2 = 2q^2$ → $q^2 = 2m^2$"},
+      {text:"$q^2$ が偶数 → $q$ も偶数",cls:"warn"},
+      {text:"$p$ も $q$ も偶数 → 互いに素に矛盾！",cls:"warn"}
+    ],speech:"pイコール2mを代入すると、q2乗イコール2m2乗となり、qも偶数だと分かります。pもqも偶数なので、互いに素という仮定に矛盾します。"},
+    {label:"結論",lines:[
+      {text:"仮定「$\\sqrt{2}$ は有理数」が矛盾を導いた"},
+      {text:"→ 仮定が誤り → $\\sqrt{2}$ は無理数",cls:"result"}
+    ],note:"背理法の3ステップ: ①結論を否定 ②論理を進める ③矛盾を導く → 元の結論が正しい",
+    speech:"矛盾が生じたので、仮定が誤りです。よってルート2は無理数です。背理法は、結論を否定し、論理を進め、矛盾を導く、という3ステップです。"}
+  ]
+},
+
+// ===== CH3: 2次関数 =====
+{
+  id:"P3-1", ch:"第3章", name:"平方完成",
+  when:"2次関数の頂点・軸を求めるとき（ほぼ全問で必要）",
+  example:"$y = 2x^2 - 8x + 5$ を平方完成せよ",
+  steps:[
+    {label:"$x^2$ の係数をくくり出す",lines:[
+      {text:"$y = 2x^2 - 8x + 5$"},
+      {text:"$= 2(x^2 - 4x) + 5$",cls:"highlight"}
+    ],note:"$x$ を含む項だけくくり出す。$+5$ は外に残す",
+    speech:"まずx2乗の係数2をくくり出します。yイコール2かっこx2乗ひく4xたす5です。xを含む項だけくくり出し、プラス5は外に残します。"},
+    {label:"括弧内で完全平方を作る",lines:[
+      {text:"$x$ の係数 $-4$ の半分は $-2$、その2乗は $4$"},
+      {text:"$= 2(x^2 - 4x + 4 - 4) + 5$",cls:"highlight"},
+      {text:"加えた分と同じ値を引いて、値を変えない"}
+    ],speech:"xの係数マイナス4の半分はマイナス2、その2乗は4です。括弧内に4を加えて4を引きます。これで値は変わりません。"},
+    {label:"整理する",lines:[
+      {text:"$= 2\\{(x-2)^2 - 4\\} + 5$"},
+      {text:"$= 2(x-2)^2 - 8 + 5$",cls:"highlight"},
+      {text:"$= 2(x-2)^2 - 3$",cls:"result"}
+    ],speech:"整理すると、2かけるかっこxひく2の2乗ひく4、たす5。展開して2かっこxひく2の2乗ひく3となります。"},
+    {label:"頂点と軸を読み取る",lines:[
+      {text:"$y = 2(x-2)^2 - 3$"},
+      {text:"頂点: $(2, -3)$",cls:"result"},
+      {text:"軸: $x = 2$",cls:"result"},
+      {text:"$a = 2 > 0$ → 下に凸"}
+    ],note:"最も多いミスは $a$ のくくり出し忘れ。$x^2$ の係数が1でないときは必ずくくり出す！",
+    drawGraph:true, graphData:{a:2,h:2,k:-3},
+    speech:"頂点は2、マイナス3。軸はxイコール2です。aは2で正なので下に凸のグラフです。最も多いミスはaのくくり出し忘れなので注意しましょう。"}
+  ]
+},
+
+{
+  id:"P3-5", ch:"第3章", name:"最大・最小（定義域制限あり）",
+  when:"$\\alpha \\leq x \\leq \\beta$ での最大・最小を求めるとき",
+  example:"$y = x^2 - 4x + 3$ ($0 \\leq x \\leq 3$) の最大値・最小値",
+  steps:[
+    {label:"平方完成",lines:[
+      {text:"$y = x^2 - 4x + 3$"},
+      {text:"$= (x - 2)^2 - 1$",cls:"highlight"},
+      {text:"頂点 $(2, -1)$、軸 $x = 2$、下に凸"}
+    ],speech:"まず平方完成します。yイコールかっこxひく2の2乗ひく1。頂点は2、マイナス1で、下に凸です。"},
+    {label:"頂点は定義域内？",lines:[
+      {text:"定義域: $0 \\leq x \\leq 3$"},
+      {text:"軸 $x = 2$ は定義域 $[0, 3]$ の中にある → 頂点が使える",cls:"highlight"}
+    ],speech:"定義域は0以上3以下です。軸xイコール2はこの範囲内にあるので、頂点の値が最小値の候補になります。"},
+    {label:"端点の値を計算",lines:[
+      {text:"$f(0) = 0 - 0 + 3 = 3$"},
+      {text:"$f(3) = 9 - 12 + 3 = 0$"},
+      {text:"$f(2) = -1$（頂点）",cls:"highlight"}
+    ],speech:"端点の値を計算します。f0イコール3、f3イコール0、頂点のf2イコールマイナス1です。"},
+    {label:"最大値・最小値を決定",lines:[
+      {text:"$f(0) = 3$, $f(2) = -1$, $f(3) = 0$ を比較"},
+      {text:"最大値: $3$（$x = 0$ のとき）",cls:"result"},
+      {text:"最小値: $-1$（$x = 2$ のとき）",cls:"result"}
+    ],note:"手順: ①平方完成 → ②頂点が定義域内か確認 → ③頂点＋両端点を比較",
+    drawGraph:true, graphData:{a:1,h:2,k:-1,domain:[0,3]},
+    speech:"3つの値を比較して、最大値は3でxイコール0のとき、最小値はマイナス1でxイコール2のときです。手順は、平方完成、頂点の確認、端点との比較です。"}
+  ]
+},
+
+{
+  id:"P3-11", ch:"第3章", name:"判別式と実数解の個数",
+  when:"2次方程式の解の個数を調べるとき",
+  example:"$x^2 - 4x + k = 0$ の解の個数を $k$ の値で分類せよ",
+  steps:[
+    {label:"判別式を計算",lines:[
+      {text:"$x^2 - 4x + k = 0$"},
+      {text:"$D = b^2 - 4ac = (-4)^2 - 4 \\cdot 1 \\cdot k$",cls:"highlight"},
+      {text:"$= 16 - 4k$"}
+    ],speech:"判別式Dを計算します。bの2乗ひく4ac、つまりマイナス4の2乗ひく4かけるkで、16ひく4kです。"},
+    {label:"$D > 0$: 異なる2つの実数解",lines:[
+      {text:"$16 - 4k > 0$ → $k < 4$",cls:"result"},
+      {text:"放物線が $x$ 軸と2点で交わる"}
+    ],drawGraph:true,graphData:{a:1,h:2,k:-1, label:"k=3: D>0"},
+    speech:"Dが正のとき、つまりkが4より小さいとき、異なる2つの実数解を持ちます。放物線がx軸と2点で交わります。"},
+    {label:"$D = 0$: 重解",lines:[
+      {text:"$16 - 4k = 0$ → $k = 4$",cls:"result"},
+      {text:"放物線が $x$ 軸に接する（1点で接触）"}
+    ],drawGraph:true,graphData:{a:1,h:2,k:0, label:"k=4: D=0"},
+    speech:"Dイコール0のとき、つまりkイコール4のとき、重解を持ちます。放物線がx軸にちょうど接します。"},
+    {label:"$D < 0$: 実数解なし",lines:[
+      {text:"$16 - 4k < 0$ → $k > 4$",cls:"result"},
+      {text:"放物線が $x$ 軸と交わらない"}
+    ],drawGraph:true,graphData:{a:1,h:2,k:1, label:"k=5: D<0"},
+    speech:"Dが負のとき、つまりkが4より大きいとき、実数解はありません。放物線がx軸と交わりません。"},
+    {label:"まとめ",lines:[
+      {text:"$k < 4$: 異なる2つの実数解",cls:"highlight"},
+      {text:"$k = 4$: 重解（$x = 2$）",cls:"warn"},
+      {text:"$k > 4$: 実数解なし"}
+    ],note:"判別式 $D$ の符号で解の個数が決まる。グラフでは $x$ 軸との交点の数に対応する",
+    speech:"まとめると、判別式Dの符号で解の個数が決まります。Dが正なら2つ、0なら重解、負なら解なしです。"}
+  ]
+},
+
+{
+  id:"P3-13", ch:"第3章", name:"2次不等式（$D > 0$: 2解あり）",
+  when:"2次不等式を解くとき（解が2つある場合）",
+  example:"$x^2 - 5x + 6 < 0$ を解け",
+  steps:[
+    {label:"対応する方程式を解く",lines:[
+      {text:"$x^2 - 5x + 6 = 0$"},
+      {text:"$(x - 2)(x - 3) = 0$",cls:"highlight"},
+      {text:"$x = 2, 3$"}
+    ],speech:"まず対応する方程式x2乗ひく5xたす6イコール0を解きます。因数分解するとxひく2かけるxひく3イコール0、よってxイコール2と3です。"},
+    {label:"グラフを描く",lines:[
+      {text:"$y = x^2 - 5x + 6$ は下に凸の放物線"},
+      {text:"$x = 2$ と $x = 3$ で $x$ 軸と交わる",cls:"highlight"}
+    ],drawGraph:true,graphData:{a:1,h:2.5,k:-0.25,roots:[2,3]},
+    speech:"グラフを描くと、下に凸の放物線で、xイコール2と3でx軸と交わります。"},
+    {label:"不等式の解を読み取る",lines:[
+      {text:"$< 0$ （負の部分）を求める → グラフが $x$ 軸より下の部分",cls:"warn"},
+      {text:"$2 < x < 3$（2つの解の内側）",cls:"result"}
+    ],note:"「小さいは挟む」：$< 0$ なら2つの解で挟まれた内側",
+    speech:"0より小さい部分、つまりグラフがx軸より下の部分を探します。答えは2小なりx小なり3で、2つの解の内側です。小さいは挟む、と覚えましょう。"},
+    {label:"補足: $> 0$ の場合",lines:[
+      {text:"もし $x^2 - 5x + 6 > 0$ なら → グラフが $x$ 軸より上の部分"},
+      {text:"$x < 2$ または $x > 3$（外側）",cls:"result"}
+    ],note:"「大きいは外側」：$> 0$ なら2つの解の外側",
+    speech:"補足です。0より大きいの場合は、グラフがx軸より上の部分で、xが2より小さいまたは3より大きい範囲、つまり外側です。大きいは外側、と覚えましょう。"}
+  ]
+},
+
+{
+  id:"P3-20", ch:"第3章", name:"解の配置",
+  when:"2次方程式の解が特定の範囲にある条件を求めるとき",
+  example:"$x^2 - 2ax + a + 2 = 0$ の2つの解がともに正となる $a$ の範囲",
+  steps:[
+    {label:"3つの条件を立てる",lines:[
+      {text:"$f(x) = x^2 - 2ax + a + 2$ として"},
+      {text:"条件①: $D \\geq 0$（実数解が存在）",cls:"highlight"},
+      {text:"条件②: 軸 $> 0$（軸が正の側）",cls:"highlight"},
+      {text:"条件③: $f(0) > 0$（$x=0$ での値が正）",cls:"highlight"}
+    ],note:"「両解が $k$ より大きい」→ 判別式・軸・端点の3条件を立てる",
+    speech:"両方の解が正になる条件を求めます。3つの条件を立てます。条件1、判別式Dが0以上。条件2、軸が正。条件3、f0が正です。"},
+    {label:"条件① $D \\geq 0$",lines:[
+      {text:"$D = 4a^2 - 4(a+2) = 4a^2 - 4a - 8 \\geq 0$"},
+      {text:"$a^2 - a - 2 \\geq 0$"},
+      {text:"$(a-2)(a+1) \\geq 0$"},
+      {text:"$a \\leq -1$ または $a \\geq 2$",cls:"result"}
+    ],speech:"条件1の判別式を計算すると、a2乗ひくaひく2が0以上。因数分解してaひく2かけるaたす1が0以上。よってaがマイナス1以下またはa2以上です。"},
+    {label:"条件② 軸 $> 0$",lines:[
+      {text:"軸: $x = \\frac{2a}{2} = a$"},
+      {text:"$a > 0$",cls:"result"}
+    ],speech:"条件2の軸はxイコールaなので、aが0より大きいです。"},
+    {label:"条件③ $f(0) > 0$",lines:[
+      {text:"$f(0) = 0 - 0 + a + 2 = a + 2$"},
+      {text:"$a + 2 > 0$ → $a > -2$",cls:"result"}
+    ],speech:"条件3のf0はaたす2で、これが正なのでaがマイナス2より大きいです。"},
+    {label:"共通範囲を求める",lines:[
+      {text:"①: $a \\leq -1$ または $a \\geq 2$"},
+      {text:"②: $a > 0$"},
+      {text:"③: $a > -2$"},
+      {text:"共通範囲: $a \\geq 2$",cls:"result"}
+    ],note:"3つの条件の共通部分（AND）が答え。数直線で図示すると分かりやすい",
+    speech:"3つの条件の共通範囲を求めます。すべてを満たすのはaが2以上の範囲です。数直線に図示すると分かりやすいですね。"}
+  ]
+},
+
+// ===== CH4: 三角比 =====
+{
+  id:"P4-2", ch:"第4章", name:"三角比の相互関係",
+  when:"1つの三角比から残り2つを求めるとき",
+  example:"$\\sin\\theta = \\frac{3}{5}$ ($0° < \\theta < 90°$) のとき $\\cos\\theta$, $\\tan\\theta$ を求めよ",
+  steps:[
+    {label:"基本公式",lines:[
+      {text:"$\\sin^2\\theta + \\cos^2\\theta = 1$",cls:"highlight"},
+      {text:"$\\tan\\theta = \\frac{\\sin\\theta}{\\cos\\theta}$"}
+    ],speech:"三角比の相互関係の基本公式です。サイン2乗シータたすコサイン2乗シータイコール1。タンジェントシータイコールサインシータ割るコサインシータです。"},
+    {label:"$\\cos\\theta$ を求める",lines:[
+      {text:"$\\sin^2\\theta + \\cos^2\\theta = 1$"},
+      {text:"$\\left(\\frac{3}{5}\\right)^2 + \\cos^2\\theta = 1$"},
+      {text:"$\\cos^2\\theta = 1 - \\frac{9}{25} = \\frac{16}{25}$",cls:"highlight"},
+      {text:"$0° < \\theta < 90°$ より $\\cos\\theta > 0$"},
+      {text:"$\\cos\\theta = \\frac{4}{5}$",cls:"result"}
+    ],speech:"コサインシータを求めます。5分の3の2乗たすコサイン2乗シータイコール1なので、コサイン2乗シータイコール25分の16。シータは鋭角なのでコサインは正で、5分の4です。"},
+    {label:"$\\tan\\theta$ を求める",lines:[
+      {text:"$\\tan\\theta = \\frac{\\sin\\theta}{\\cos\\theta} = \\frac{3/5}{4/5} = \\frac{3}{4}$",cls:"result"}
+    ],note:"鈍角（$90° < \\theta < 180°$）のときは $\\cos\\theta < 0$, $\\tan\\theta < 0$ に注意！",
+    speech:"タンジェントシータはサイン割るコサインで、5分の3割る5分の4イコール4分の3です。鈍角のときはコサインとタンジェントが負になるので注意しましょう。"}
+  ]
+},
+
+{
+  id:"P4-5", ch:"第4章", name:"余弦定理",
+  when:"2辺と挟む角→残りの辺、3辺→角を求めるとき",
+  example:"$\\triangle ABC$ で $b=5$, $c=7$, $A=60°$ のとき $a$ を求めよ",
+  steps:[
+    {label:"余弦定理の公式",lines:[
+      {text:"$a^2 = b^2 + c^2 - 2bc\\cos A$",cls:"highlight"}
+    ],speech:"余弦定理の公式です。a2乗イコールb2乗たすc2乗ひく2bcコサインAです。"},
+    {label:"値を代入",lines:[
+      {text:"$a^2 = 5^2 + 7^2 - 2 \\cdot 5 \\cdot 7 \\cdot \\cos 60°$"},
+      {text:"$= 25 + 49 - 70 \\times \\frac{1}{2}$",cls:"highlight"},
+      {text:"$= 74 - 35$"},
+      {text:"$= 39$"}
+    ],speech:"値を代入します。5の2乗たす7の2乗ひく2かける5かける7かけるコサイン60度。コサイン60度は2分の1なので、25たす49ひく35イコール39です。"},
+    {label:"辺の長さを求める",lines:[
+      {text:"$a^2 = 39$"},
+      {text:"$a = \\sqrt{39}$",cls:"result"}
+    ],note:"余弦定理は「2辺と挟む角」または「3辺」のときに使う。正弦定理との使い分けが重要！",
+    drawTriangle:true, triData:{a:"√39",b:5,c:7,A:"60°",B:"",C:""},
+    speech:"aの2乗が39なので、aイコールルート39です。余弦定理は2辺と挟む角、または3辺のときに使います。"}
+  ]
+},
+
+{
+  id:"P4-7", ch:"第4章", name:"三角形の面積（2辺と挟む角）",
+  when:"2辺とその間の角が分かっているとき",
+  example:"$\\triangle ABC$ で $b=6$, $c=8$, $A=30°$ のとき面積 $S$",
+  steps:[
+    {label:"面積公式",lines:[
+      {text:"$S = \\frac{1}{2}bc\\sin A$",cls:"highlight"}
+    ],speech:"三角形の面積公式です。Sイコール2分の1bcサインAです。"},
+    {label:"値を代入",lines:[
+      {text:"$S = \\frac{1}{2} \\times 6 \\times 8 \\times \\sin 30°$"},
+      {text:"$= \\frac{1}{2} \\times 6 \\times 8 \\times \\frac{1}{2}$",cls:"highlight"},
+      {text:"$= 12$",cls:"result"}
+    ],note:"$\\sin 30° = \\frac{1}{2}$, $\\sin 45° = \\frac{\\sqrt{2}}{2}$, $\\sin 60° = \\frac{\\sqrt{3}}{2}$ は暗記必須",
+    drawTriangle:true, triData:{a:"",b:6,c:8,A:"30°",B:"",C:"",area:12},
+    speech:"値を代入します。2分の1かける6かける8かけるサイン30度。サイン30度は2分の1なので、2分の1かける6かける8かける2分の1イコール12です。サイン30度、45度、60度の値は暗記必須です。"}
+  ]
+},
+
+// ===== CH5: データの分析 =====
+{
+  id:"P5-3", ch:"第5章", name:"分散と標準偏差",
+  when:"データの散らばりの度合いを数値化するとき",
+  example:"データ: $2, 4, 6, 8, 10$ の分散と標準偏差を求めよ",
+  steps:[
+    {label:"平均値を求める",lines:[
+      {text:"$\\bar{x} = \\frac{2+4+6+8+10}{5} = \\frac{30}{5} = 6$",cls:"highlight"}
+    ],speech:"まず平均値を求めます。2たす4たす6たす8たす10を5で割って、30割る5イコール6です。"},
+    {label:"各データの偏差の2乗",lines:[
+      {text:"$(2-6)^2 = 16$"},
+      {text:"$(4-6)^2 = 4$"},
+      {text:"$(6-6)^2 = 0$",cls:"highlight"},
+      {text:"$(8-6)^2 = 4$"},
+      {text:"$(10-6)^2 = 16$"}
+    ],speech:"各データから平均を引いた偏差の2乗を求めます。2ひく6の2乗は16、4ひく6の2乗は4、6ひく6の2乗は0、8ひく6の2乗は4、10ひく6の2乗は16です。"},
+    {label:"分散を求める",lines:[
+      {text:"$s^2 = \\frac{16+4+0+4+16}{5} = \\frac{40}{5} = 8$",cls:"result"}
+    ],speech:"分散は偏差の2乗の平均です。16たす4たす0たす4たす16を5で割って、40割る5イコール8です。"},
+    {label:"標準偏差",lines:[
+      {text:"$s = \\sqrt{s^2} = \\sqrt{8} = 2\\sqrt{2} \\approx 2.83$",cls:"result"}
+    ],note:"計算のコツ: $s^2 = \\overline{x^2} - \\bar{x}^2$（2乗の平均 − 平均の2乗）を使うと速い",
+    speech:"標準偏差は分散の平方根です。ルート8イコール2ルート2、およそ2.83です。計算のコツとして、2乗の平均ひく平均の2乗という公式を使うと速いです。"}
+  ]
+},
+
+{
+  id:"P1-12", ch:"第1章", name:"分母の有理化",
+  when:"分母に根号を含む式を変形するとき",
+  example:"$\\frac{1}{\\sqrt{3}+\\sqrt{2}}$ を有理化せよ",
+  steps:[
+    {label:"有理化の方針",lines:[
+      {text:"分母: $\\sqrt{3} + \\sqrt{2}$"},
+      {text:"$(a+b)(a-b) = a^2 - b^2$ を利用する",cls:"highlight"},
+      {text:"分母と分子に $\\sqrt{3} - \\sqrt{2}$ を掛ける"}
+    ],speech:"分母はルート3たすルート2です。和と差の積の公式を使います。分母と分子にルート3ひくルート2を掛けます。"},
+    {label:"分母・分子に掛ける",lines:[
+      {text:"$\\frac{1}{\\sqrt{3}+\\sqrt{2}} \\times \\frac{\\sqrt{3}-\\sqrt{2}}{\\sqrt{3}-\\sqrt{2}}$",cls:"highlight"}
+    ],speech:"分母・分子にルート3ひくルート2を掛けます。"},
+    {label:"分母を計算",lines:[
+      {text:"分母: $(\\sqrt{3}+\\sqrt{2})(\\sqrt{3}-\\sqrt{2})$"},
+      {text:"$= (\\sqrt{3})^2 - (\\sqrt{2})^2 = 3 - 2 = 1$",cls:"highlight"}
+    ],speech:"分母を計算すると、ルート3の2乗ひくルート2の2乗イコール3ひく2イコール1です。"},
+    {label:"完成",lines:[
+      {text:"$= \\frac{\\sqrt{3}-\\sqrt{2}}{1} = \\sqrt{3} - \\sqrt{2}$",cls:"result"}
+    ],note:"分母が $\\sqrt{a}+\\sqrt{b}$ → $\\sqrt{a}-\\sqrt{b}$ を掛ける。分母が $\\sqrt{a}-\\sqrt{b}$ → $\\sqrt{a}+\\sqrt{b}$ を掛ける",
+    speech:"分母が1になったので、答えはルート3ひくルート2です。分母がたすのときはひくを掛け、ひくのときはたすを掛けると覚えましょう。"}
+  ]
+},
+
+{
+  id:"P4-4", ch:"第4章", name:"正弦定理",
+  when:"1辺と2角がわかっている、または角と対辺がわかっているとき",
+  example:"$\\triangle ABC$ で $A=30°$, $B=45°$, $a=4$ のとき $b$ を求めよ",
+  steps:[
+    {label:"正弦定理の公式",lines:[
+      {text:"$\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R$",cls:"highlight"}
+    ],speech:"正弦定理の公式です。サインA分のaイコールサインB分のbイコールサインC分のcイコール2Rです。"},
+    {label:"使う部分を選ぶ",lines:[
+      {text:"$a$ と $A$ と $B$ が分かっているので"},
+      {text:"$\\frac{a}{\\sin A} = \\frac{b}{\\sin B}$",cls:"highlight"}
+    ],speech:"aとAとBが分かっているので、サインA分のaイコールサインB分のbの部分を使います。"},
+    {label:"値を代入",lines:[
+      {text:"$\\frac{4}{\\sin 30°} = \\frac{b}{\\sin 45°}$"},
+      {text:"$\\frac{4}{1/2} = \\frac{b}{\\sqrt{2}/2}$",cls:"highlight"},
+      {text:"$8 = \\frac{2b}{\\sqrt{2}}$"}
+    ],speech:"値を代入します。4割るサイン30度イコールb割るサイン45度。サイン30度は2分の1、サイン45度は2分のルート2なので、8イコール2b割るルート2です。"},
+    {label:"$b$ を求める",lines:[
+      {text:"$b = \\frac{8\\sqrt{2}}{2} = 4\\sqrt{2}$",cls:"result"}
+    ],note:"正弦定理は「対辺と対角のペア」で使う。2ペア分かれば残りが求まる",
+    drawTriangle:true, triData:{a:4,b:"4√2",c:"",A:"30°",B:"45°",C:"105°"},
+    speech:"bイコール4ルート2です。正弦定理は対辺と対角のペアで使うことを覚えておきましょう。"}
+  ]
+},
+
+];
+
+// ============================================================
+// Render pattern selector (dropdown)
+// ============================================================
+function renderSelector(){
+  const sel=document.getElementById('pattern-select');
+  let currentCh='';
+  let optgroup=null;
+  animPatterns.forEach(p=>{
+    if(p.ch!==currentCh){
+      currentCh=p.ch;
+      optgroup=document.createElement('optgroup');
+      optgroup.label=p.ch;
+      sel.appendChild(optgroup);
+    }
+    const opt=document.createElement('option');
+    opt.value=p.id;
+    opt.textContent=`${p.id.replace('P','')}: ${p.name}`;
+    optgroup.appendChild(opt);
+  });
+}
+
+function prevPattern(){
+  if(!currentPattern)return;
+  const idx=animPatterns.findIndex(p=>p.id===currentPattern.id);
+  if(idx>0) loadPattern(animPatterns[idx-1].id);
+}
+function nextPattern(){
+  if(!currentPattern){loadPattern(animPatterns[0].id);return;}
+  const idx=animPatterns.findIndex(p=>p.id===currentPattern.id);
+  if(idx<animPatterns.length-1) loadPattern(animPatterns[idx+1].id);
+}
+
+// ============================================================
+// Load and display pattern animation
+// ============================================================
+let currentPattern=null;
+let currentStep=0;
+
+function loadPattern(id){
+  if(!id)return;
+  if(typeof stopAutoPlay==='function') stopAutoPlay();
+  currentPattern=animPatterns.find(p=>p.id===id);
+  if(!currentPattern)return;
+  currentStep=0;
+
+  // Sync dropdown
+  document.getElementById('pattern-select').value=id;
+
+  // Show bottom nav
+  document.getElementById('bottom-nav').style.display='flex';
+
+  renderAnimation();
+
+  // Scroll animation area into view
+  document.getElementById('anim-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderAnimation(){
+  const area=document.getElementById('anim-area');
+  const p=currentPattern;
+  const totalSteps=p.steps.length;
+
+  let dotsHtml='<div class="progress-dots">';
+  for(let i=0;i<totalSteps;i++){
+    const cls=i<currentStep?'done':i===currentStep?'active':'';
+    dotsHtml+=`<div class="dot ${cls}"></div>`;
+  }
+  dotsHtml+='</div>';
+
+  let stepsHtml='';
+  p.steps.forEach((s,i)=>{
+    const active=i===currentStep?'active':'';
+    let content='';
+
+    // Tasuki-kake special rendering
+    if(s.useTasuki&&s.tasukiData){
+      const t=s.tasukiData;
+      content+=`<div class="tasuki-grid">
+        <div class="cell hl-a">${t.a1}</div><div class="cell hl-b">${t.b1}</div><div class="cell" style="font-size:.8em">${t.cross1}</div>
+        <div class="cell hl-a">${t.a2}</div><div class="cell hl-b">${t.b2}</div><div class="cell" style="font-size:.8em">${t.cross2}</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell hl-ok">${t.sum}</div>
+      </div>`;
+    }
+
+    // Lines
+    s.lines.forEach(l=>{
+      content+=`<div class="math-line ${l.cls||''}">${l.text}</div>`;
+    });
+
+    // Note
+    if(s.note){
+      content+=`<div class="step-note">${s.note}</div>`;
+    }
+
+    // Canvas placeholder
+    if(s.drawGraph){
+      content+=`<canvas class="graph-canvas" id="canvas-step-${i}" width="360" height="220"></canvas>`;
+    }
+    if(s.drawTriangle){
+      content+=`<canvas class="graph-canvas" id="tri-canvas-step-${i}" width="360" height="220"></canvas>`;
+    }
+
+    stepsHtml+=`<div class="step ${active}">
+      <div class="step-label">Step ${i+1}</div>
+      <div class="step-content">${content}</div>
+    </div>`;
+  });
+
+  area.innerHTML=`
+    <div class="anim-title">${p.id}: ${p.name}</div>
+    <div class="anim-when">${p.when}</div>
+    <div style="text-align:center;font-size:.9em;margin-bottom:16px;color:var(--primary);font-weight:600">例題: ${p.example}</div>
+    ${dotsHtml}
+    <div class="step-container">${stepsHtml}</div>
+  `;
+
+  // Update fixed bottom nav
+  document.getElementById('bn-prev').disabled=(currentStep===0);
+  document.getElementById('bn-next').disabled=(currentStep===totalSteps-1);
+  document.getElementById('bn-indicator').textContent=`Step ${currentStep+1} / ${totalSteps}`;
+
+  // Render KaTeX
+  renderMathInElement(area,{delimiters:[
+    {left:'$$',right:'$$',display:true},
+    {left:'$',right:'$',display:false}
+  ]});
+
+  // Draw graphs after rendering
+  setTimeout(()=>{
+    const step=p.steps[currentStep];
+    if(step.drawGraph&&step.graphData){
+      drawParabola(`canvas-step-${currentStep}`,step.graphData);
+    }
+    if(step.drawTriangle&&step.triData){
+      drawTriangle(`tri-canvas-step-${currentStep}`,step.triData);
+    }
+  },100);
+}
+
+function nextStep(){
+  if(!currentPattern)return;
+  if(typeof stopAutoPlay==='function') stopAutoPlay();
+  if(currentStep<currentPattern.steps.length-1){
+    currentStep++;
+    renderAnimation();
+  }
+}
+function prevStep(){
+  if(!currentPattern)return;
+  if(typeof stopAutoPlay==='function') stopAutoPlay();
+  if(currentStep>0){
+    currentStep--;
+    renderAnimation();
+  }
+}
+function replayPattern(){
+  if(typeof stopAutoPlay==='function') stopAutoPlay();
+  currentStep=0;
+  renderAnimation();
+}
+
+// Keyboard navigation
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();nextStep();}
+  if(e.key==='ArrowLeft'){e.preventDefault();prevStep();}
+  if(e.key==='r'||e.key==='R'){replayPattern();}
+  if(e.key==='s'||e.key==='S'){toggleSpeech();}
+});
+
+// ============================================================
+// Speech Synthesis (音声読み上げ)
+// ============================================================
+let speechEnabled=false;
+let speechRate=1;
+let currentUtterance=null;
+let jaVoice=null;
+
+// Find Japanese voice
+function initVoices(){
+  const voices=speechSynthesis.getVoices();
+  // Prefer Japanese voices
+  jaVoice=voices.find(v=>v.lang==='ja-JP'&&v.name.includes('Haruka'))
+    ||voices.find(v=>v.lang==='ja-JP'&&v.name.includes('Nanami'))
+    ||voices.find(v=>v.lang==='ja-JP'&&v.name.includes('Ayumi'))
+    ||voices.find(v=>v.lang==='ja-JP')
+    ||voices.find(v=>v.lang.startsWith('ja'))
+    ||null;
+}
+if(speechSynthesis.onvoiceschanged!==undefined){
+  speechSynthesis.onvoiceschanged=initVoices;
+}
+initVoices();
+
+function toggleSpeech(){
+  speechEnabled=!speechEnabled;
+  const btn=document.getElementById('btn-speech');
+  if(speechEnabled){
+    btn.classList.add('active');
+    btn.innerHTML='&#128266; 音声ON';
+    // Speak current step
+    if(currentPattern){
+      speakStep(currentPattern.steps[currentStep]);
+    }
+  }else{
+    btn.classList.remove('active');
+    btn.classList.remove('speaking');
+    btn.innerHTML='&#128264; 音声';
+    stopSpeech();
+  }
+}
+
+function updateSpeechRate(){
+  speechRate=parseFloat(document.getElementById('speech-speed').value);
+}
+
+function stopSpeech(){
+  speechSynthesis.cancel();
+  currentUtterance=null;
+  document.getElementById('btn-speech').classList.remove('speaking');
+}
+
+// Fix pronunciation for math terms before speaking
+function fixPronunciation(text){
+  return text
+    // 「x2乗」→「xのにじょう」(letter followed by 2乗)
+    .replace(/([a-zA-Z])2乗/g,'$1のにじょう')
+    // 「3の2乗」is fine as-is (number+の+2乗)
+    // 「2乗」standalone → 「にじょう」
+    .replace(/(\d)の2乗/g,'$1のにじょう')
+    .replace(/の2乗/g,'のにじょう')
+    // Remaining standalone 2乗
+    .replace(/2乗/g,'にじょう')
+    // 「イコール」に間を入れる
+    .replace(/イコール/g,'、イコール、')
+    // 重複カンマ削除
+    .replace(/、、+/g,'、');
+}
+
+function speakStep(step){
+  if(!speechEnabled||!step.speech)return;
+  stopSpeech();
+
+  // Small delay to let the visual update happen first
+  setTimeout(()=>{
+    const utter=new SpeechSynthesisUtterance(fixPronunciation(step.speech));
+    utter.lang='ja-JP';
+    utter.rate=speechRate;
+    utter.pitch=1.05;
+    if(jaVoice) utter.voice=jaVoice;
+
+    const btn=document.getElementById('btn-speech');
+    utter.onstart=()=>{btn.classList.add('speaking');};
+    utter.onend=()=>{btn.classList.remove('speaking');currentUtterance=null;};
+    utter.onerror=()=>{btn.classList.remove('speaking');currentUtterance=null;};
+
+    currentUtterance=utter;
+    speechSynthesis.speak(utter);
+  },300);
+}
+
+// ============================================================
+// Auto-play (自動再生)
+// ============================================================
+let autoPlaying=false;
+let autoPlayTimer=null;
+
+function toggleAutoPlay(){
+  if(autoPlaying){
+    stopAutoPlay();
+  }else{
+    startAutoPlay();
+  }
+}
+
+function startAutoPlay(){
+  if(!currentPattern)return;
+  autoPlaying=true;
+  const btn=document.getElementById('btn-autoplay');
+  btn.classList.add('active');
+  btn.innerHTML='&#9646;&#9646; 停止';
+
+  // Enable speech if not already on
+  if(!speechEnabled){
+    speechEnabled=true;
+    const sb=document.getElementById('btn-speech');
+    sb.classList.add('active');
+    sb.innerHTML='&#128266; 音声ON';
+  }
+
+  // Start speaking current step with auto-advance
+  autoPlayStep();
+}
+
+function stopAutoPlay(){
+  autoPlaying=false;
+  clearTimeout(autoPlayTimer);
+  autoPlayTimer=null;
+  const btn=document.getElementById('btn-autoplay');
+  btn.classList.remove('active');
+  btn.innerHTML='&#9654; 自動再生';
+}
+
+function autoPlayStep(){
+  if(!autoPlaying||!currentPattern)return;
+  stopSpeech();
+
+  const step=currentPattern.steps[currentStep];
+  if(!step.speech){
+    // No speech for this step, wait a moment then advance
+    autoPlayTimer=setTimeout(()=>autoAdvance(),1500);
+    return;
+  }
+
+  const utter=new SpeechSynthesisUtterance(fixPronunciation(step.speech));
+  utter.lang='ja-JP';
+  utter.rate=speechRate;
+  utter.pitch=1.05;
+  if(jaVoice) utter.voice=jaVoice;
+
+  const speechBtn=document.getElementById('btn-speech');
+  utter.onstart=()=>{speechBtn.classList.add('speaking');};
+  utter.onend=()=>{
+    speechBtn.classList.remove('speaking');
+    currentUtterance=null;
+    if(autoPlaying){
+      // Wait a short pause then advance
+      autoPlayTimer=setTimeout(()=>autoAdvance(),800);
+    }
+  };
+  utter.onerror=()=>{
+    speechBtn.classList.remove('speaking');
+    currentUtterance=null;
+    if(autoPlaying){
+      autoPlayTimer=setTimeout(()=>autoAdvance(),800);
+    }
+  };
+
+  currentUtterance=utter;
+  speechSynthesis.speak(utter);
+}
+
+function autoAdvance(){
+  if(!autoPlaying||!currentPattern)return;
+  if(currentStep<currentPattern.steps.length-1){
+    currentStep++;
+    renderAnimation();
+    // autoPlayStep will be called after render via the hook below
+  }else{
+    // Reached the last step, stop auto-play
+    stopAutoPlay();
+  }
+}
+
+// Auto-speak on pattern load (hook into renderAnimation)
+const _origRenderAnimation=renderAnimation;
+renderAnimation=function(){
+  _origRenderAnimation();
+  if(autoPlaying&&currentPattern){
+    // In auto-play mode, use autoPlayStep for synchronized advance
+    autoPlayStep();
+  }else if(speechEnabled&&currentPattern){
+    speakStep(currentPattern.steps[currentStep]);
+  }
+};
+
+// ============================================================
+// Canvas drawing: Parabola
+// ============================================================
+function drawParabola(canvasId,data){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const {a,h,k}=data;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Coordinate system
+  const ox=W/2, oy=H*0.7; // origin position
+  const scaleX=30, scaleY=30;
+
+  function toScreen(x,y){return[ox+x*scaleX, oy-y*scaleY];}
+
+  // Grid
+  ctx.strokeStyle='#eee';ctx.lineWidth=1;
+  for(let x=-6;x<=6;x++){
+    const [sx]=toScreen(x,0);
+    ctx.beginPath();ctx.moveTo(sx,0);ctx.lineTo(sx,H);ctx.stroke();
+  }
+  for(let y=-3;y<=6;y++){
+    const [,sy]=toScreen(0,y);
+    ctx.beginPath();ctx.moveTo(0,sy);ctx.lineTo(W,sy);ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle='#999';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,oy);ctx.lineTo(W,oy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ox,0);ctx.lineTo(ox,H);ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle='#999';ctx.font='11px sans-serif';
+  ctx.fillText('x',W-14,oy-5);
+  ctx.fillText('y',ox+5,12);
+  ctx.fillText('O',ox+4,oy+14);
+
+  // Domain shading
+  if(data.domain){
+    const [x1,x2]=data.domain;
+    const [sx1]=toScreen(x1,0);
+    const [sx2]=toScreen(x2,0);
+    ctx.fillStyle='rgba(41,128,185,0.08)';
+    ctx.fillRect(sx1,0,sx2-sx1,H);
+    // Domain markers
+    ctx.fillStyle='#2980b9';ctx.font='bold 11px sans-serif';
+    ctx.fillText(x1,sx1-4,oy+14);
+    ctx.fillText(x2,sx2-4,oy+14);
+    ctx.strokeStyle='#2980b9';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(sx1,0);ctx.lineTo(sx1,H);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(sx2,0);ctx.lineTo(sx2,H);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Roots markers
+  if(data.roots){
+    data.roots.forEach(r=>{
+      const [rx,ry]=toScreen(r,0);
+      ctx.fillStyle=('#e74c3c');
+      ctx.beginPath();ctx.arc(rx,ry,5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#e74c3c';ctx.font='bold 11px sans-serif';
+      ctx.fillText(r,rx-4,ry+16);
+    });
+    // Shade between roots for inequality
+    const [r1,r2]=data.roots;
+    const [sx1]=toScreen(r1,0);
+    const [sx2]=toScreen(r2,0);
+    ctx.fillStyle='rgba(231,76,60,0.1)';
+    ctx.fillRect(sx1,oy,sx2-sx1,H-oy);
+  }
+
+  // Draw parabola with animation effect
+  ctx.strokeStyle='#2980b9';ctx.lineWidth=2.5;
+  ctx.beginPath();
+  let started=false;
+  for(let px=-6;px<=6;px+=0.05){
+    const py=a*(px-h)*(px-h)+k;
+    const [sx,sy]=toScreen(px,py);
+    if(sy<-20||sy>H+20)continue;
+    if(!started){ctx.moveTo(sx,sy);started=true;}
+    else ctx.lineTo(sx,sy);
+  }
+  ctx.stroke();
+
+  // Vertex
+  const [vx,vy]=toScreen(h,k);
+  ctx.fillStyle='#e67e22';
+  ctx.beginPath();ctx.arc(vx,vy,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e67e22';ctx.font='bold 11px sans-serif';
+  ctx.fillText(`(${h}, ${k})`,vx+8,vy-8);
+
+  // Axis of symmetry
+  ctx.strokeStyle='#e67e22';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(vx,0);ctx.lineTo(vx,H);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Domain endpoint values
+  if(data.domain){
+    const [x1,x2]=data.domain;
+    const y1=a*(x1-h)*(x1-h)+k;
+    const y2=a*(x2-h)*(x2-h)+k;
+    [[x1,y1],[x2,y2]].forEach(([px,py])=>{
+      const [sx,sy]=toScreen(px,py);
+      ctx.fillStyle='#27ae60';
+      ctx.beginPath();ctx.arc(sx,sy,5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#27ae60';ctx.font='bold 10px sans-serif';
+      ctx.fillText(`${py}`,sx+8,sy-4);
+    });
+  }
+
+  // Label
+  if(data.label){
+    ctx.fillStyle='var(--primary)';ctx.font='bold 12px sans-serif';
+    ctx.fillText(data.label,10,16);
+  }
+}
+
+// ============================================================
+// Canvas drawing: Triangle
+// ============================================================
+function drawTriangle(canvasId,data){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Draw a triangle
+  const cx=W/2, cy=H/2;
+  const size=70;
+
+  // Points: A at top, B at bottom-left, C at bottom-right
+  const Ax=cx, Ay=cy-size*0.9;
+  const Bx=cx-size*1.1, By=cy+size*0.7;
+  const Cx=cx+size*1.1, Cy=cy+size*0.7;
+
+  // Fill
+  ctx.fillStyle='rgba(41,128,185,0.06)';
+  ctx.beginPath();ctx.moveTo(Ax,Ay);ctx.lineTo(Bx,By);ctx.lineTo(Cx,Cy);ctx.closePath();ctx.fill();
+
+  // Edges
+  ctx.strokeStyle='#2980b9';ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(Ax,Ay);ctx.lineTo(Bx,By);ctx.lineTo(Cx,Cy);ctx.closePath();ctx.stroke();
+
+  // Vertices
+  ctx.fillStyle='#e67e22';ctx.font='bold 14px sans-serif';
+  ctx.fillText('A',Ax-4,Ay-10);
+  ctx.fillText('B',Bx-16,By+16);
+  ctx.fillText('C',Cx+6,Cy+16);
+
+  // Side labels
+  ctx.fillStyle='#2c3e50';ctx.font='bold 12px sans-serif';
+  // a = BC (bottom)
+  if(data.a) ctx.fillText('a='+data.a,(Bx+Cx)/2-15,By+30);
+  // b = CA (right)
+  if(data.b) ctx.fillText('b='+data.b,(Ax+Cx)/2+10,(Ay+Cy)/2);
+  // c = AB (left)
+  if(data.c) ctx.fillText('c='+data.c,(Ax+Bx)/2-40,(Ay+By)/2);
+
+  // Angle labels
+  ctx.fillStyle='#e67e22';ctx.font='bold 11px sans-serif';
+  if(data.A) ctx.fillText(data.A,Ax+8,Ay+22);
+  if(data.B) ctx.fillText(data.B,Bx+10,By-8);
+  if(data.C) ctx.fillText(data.C,Cx-30,Cy-8);
+
+  // Area
+  if(data.area){
+    ctx.fillStyle='#27ae60';ctx.font='bold 13px sans-serif';
+    ctx.fillText('S='+data.area,(Bx+Cx)/2-10,(Ay+By)/2+10);
+  }
+
+  // Angle arcs
+  function drawArc(px,py,startAngle,endAngle){
+    ctx.strokeStyle='#e67e22';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(px,py,18,startAngle,endAngle);ctx.stroke();
+  }
+  // Simple arcs for visual effect
+  if(data.A) drawArc(Ax,Ay,Math.PI*0.35,Math.PI*0.65);
+  if(data.B) drawArc(Bx,By,-Math.PI*0.15,Math.PI*(-0.45));
+  if(data.C) drawArc(Cx,Cy,Math.PI*0.85,Math.PI*1.15+Math.PI);
+}
+
+// Init
+renderSelector();
+</script>
+</body>
+</html>
