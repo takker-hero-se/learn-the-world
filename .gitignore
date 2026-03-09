@@ -14,3 +14,11 @@ __pycache__/
 
 # Translation cache (large)
 EnglishStudy/translation_cache.json
+
+# Story generation temp files
+EnglishStudy/stories_*.js
+EnglishStudy/batch_agent_*.json
+EnglishStudy/story_batches.json
+EnglishStudy/uncovered_words.json
+EnglishStudy/merge_stories.js
+EnglishStudy/group_words.js
